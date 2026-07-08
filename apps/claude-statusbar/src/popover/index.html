@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Claude Statusbar</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="popover">
+    <header class="popover__header">
+      <span class="popover__title">Claude</span>
+      <span id="freshness" class="popover__freshness">carregando…</span>
+    </header>
+
+    <section class="window" data-window="five_hour">
+      <div class="window__label">
+        <span>Janela de 5h</span>
+        <span id="five-hour-pct" class="window__pct">--%</span>
+      </div>
+      <div class="bar">
+        <div id="five-hour-bar" class="bar__fill" style="width: 0%"></div>
+      </div>
+      <div id="five-hour-reset" class="window__reset">sem dado</div>
+    </section>
+
+    <section class="window" data-window="seven_day">
+      <div class="window__label">
+        <span>Janela de 7 dias</span>
+        <span id="seven-day-pct" class="window__pct">--%</span>
+      </div>
+      <div class="bar">
+        <div id="seven-day-bar" class="bar__fill" style="width: 0%"></div>
+      </div>
+      <div id="seven-day-reset" class="window__reset">sem dado</div>
+    </section>
+
+    <footer id="today" class="popover__footer">—</footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

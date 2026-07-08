@@ -1,0 +1,17 @@
+{
+  "name": "claude-statusbar",
+  "private": true,
+  "version": "0.1.0",
+  "description": "macOS menu-bar app showing Claude's 5h/7d rate-limit usage",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "install-bridge": "sh scripts/install-bridge.sh"
+  },
+  "dependencies": {
+    "menubar": "^9.5.1"
+  },
+  "devDependencies": {
+    "electron": "^44.3.0"
+  }
+}
