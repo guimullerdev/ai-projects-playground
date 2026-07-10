@@ -1,0 +1,13 @@
+{
+  "name": "commit-streak",
+  "version": "0.1.0",
+  "description": "Menu bar app that reads your local git commits and reminds you to commit before the day ends.",
+  "private": true,
+  "main": "main/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^32.0.0"
+  }
+}
