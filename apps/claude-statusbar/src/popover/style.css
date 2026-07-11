@@ -1,34 +1,4 @@
-:root {
-  --bg: #f6f5f1;
-  --surface: #ffffff;
-  --surface-inset: #f0efe9;
-  --ink: #1c211e;
-  --muted: #5d655f;
-  --border: #e1ded4;
-  --accent: #1f6f5c;
-  --up: #1f6f5c;
-  --warn: #b3862a;
-  --down: #b3402a;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #10130f;
-    --surface: #171b16;
-    --surface-inset: #1d221c;
-    --ink: #ecece6;
-    --muted: #9aa39c;
-    --border: #2a2f28;
-    --accent: #56c2a2;
-    --up: #56c2a2;
-    --warn: #e0b35a;
-    --down: #e07a5f;
-  }
-}
-
-* {
-  box-sizing: border-box;
-}
+@import url('../shared/theme.css');
 
 body {
   margin: 0;
@@ -107,8 +77,31 @@ body {
 }
 
 .popover__footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 11px;
   color: var(--muted);
   border-top: 1px solid var(--border);
   padding-top: 10px;
+}
+
+.popover__today {
+  flex: 1;
+  min-width: 0;
+}
+
+.popover__link {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.popover__link:hover {
+  text-decoration: underline;
 }

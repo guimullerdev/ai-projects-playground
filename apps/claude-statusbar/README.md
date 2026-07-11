@@ -60,13 +60,41 @@ hoje.
 - **Popover**: barras de 5h e 7 dias, com percentual, countdown até o reset
   (`reseta em 1h12`) e um selo de frescor (`atualizado agora` / `há 8 min` /
   `há 2h — sem sessão aberta`). Uma linha de rodapé com tokens de hoje, número
-  de sessões e o modelo predominante — lido direto dos transcripts em
-  `~/.claude/projects/`, com deduplicação (resume/fork de sessão duplicam
-  linhas nesses arquivos).
+  de sessões e o modelo predominante, e um link pro relatório.
 - **Notificação nativa** quando a janela de 5h cruza 70% e depois 90%, uma
   vez por janela.
+- **Relatório** (botão "Relatório ›" no popover): janela separada com o
+  histórico dos últimos 30 dias — ver abaixo.
 
-## Limitações conhecidas do v1
+## Relatório
+
+O botão "Relatório ›" no popover abre uma janela com os últimos 30 dias, lidos
+dos transcripts em `~/.claude/projects/`:
+
+- **consumo por dia** (colunas, com tabela equivalente embaixo do gráfico);
+- **composição dos tokens** — input, output, cache creation e cache read. É a
+  parte que costuma surpreender: sessão longa é quase toda releitura de cache,
+  e isso aparece na hora;
+- **quebra por projeto, por modelo e por entrypoint** (app desktop vs CLI);
+- **custo estimado**, com tabela de preço versionada em
+  [`src/usage/pricing.js`](./src/usage/pricing.js).
+
+Duas coisas que o indexador ([`src/usage/indexer.js`](./src/usage/indexer.js))
+resolve e que qualquer varredura ingênua erra:
+
+- **Deduplicação.** Resume, fork de sessão e sidechain recopiam o histórico
+  pro arquivo novo. Nesta máquina, 46% das linhas com `usage` eram repetidas —
+  sem deduplicar por `(message.id, requestId)`, todo número quase dobra.
+- **Leitura incremental.** Transcripts só crescem, então o índice guarda o
+  offset em bytes de cada arquivo em `~/.claude/statusbar/usage-index.json` e
+  lê só o que foi acrescentado. Aqui: ~110 ms na primeira varredura de 30 MB,
+  menos de 20 ms nas seguintes.
+
+O custo em dólar é **estimativa** e está rotulado como tal na interface: a
+assinatura não cobra por token. O que ele serve é comparar projetos, modelos e
+dias entre si.
+
+## Limitações conhecidas
 
 - O dado só atualiza enquanto uma sessão do Claude Code está aberta em algum
   lugar (CLI ou desktop) — é assim que o statusline é acionado. Sem sessão
@@ -76,10 +104,13 @@ hoje.
   O app degrada pra "sem dado" em campos ausentes, mas se um release futuro
   renomear `rate_limits.five_hour`, isso para de funcionar até o código ser
   atualizado.
-- A linha de "hoje" é uma varredura simples dos transcripts, não o indexador
-  completo do v2 (sem cache incremental, sem quebra por projeto/modelo). Em
-  máquinas com muito histórico ela pode ficar perceptivelmente lenta — por
-  isso roda a cada 5 minutos, não a cada atualização de rate limit.
+- O relatório conta **tokens**, não percentual de limite: as duas coisas não
+  são conversíveis, e a única fonte honesta de percentual é a ponte. Pelo
+  mesmo motivo o custo em dólar é sempre estimativa — a assinatura não cobra
+  por token.
+- O índice guarda um registro por resposta nos últimos 90 dias. Com muito
+  histórico o cache chega a alguns MB; registros mais velhos que isso são
+  descartados a cada gravação.
 
 ## Empacotar
 

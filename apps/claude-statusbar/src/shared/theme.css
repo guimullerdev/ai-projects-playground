@@ -1,0 +1,70 @@
+/* Shared tokens for both windows — the popover and the report.
+ *
+ * The chrome colors are the same set the v1 popover shipped with. The series
+ * slots are the data-viz palette, in fixed order (never cycled), validated
+ * against this app's own surfaces: light passes every gate with a contrast
+ * warning on slots 3 and 4, which is why every chart that uses them carries
+ * visible labels/values; dark passes all six, including contrast. */
+
+:root {
+  color-scheme: light;
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface-inset: #f0efe9;
+  --ink: #1c211e;
+  --muted: #5d655f;
+  --border: #e1ded4;
+  --accent: #1f6f5c;
+  --up: #1f6f5c;
+  --warn: #b3862a;
+  --down: #b3402a;
+
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #10130f;
+    --surface: #171b16;
+    --surface-inset: #1d221c;
+    --ink: #ecece6;
+    --muted: #9aa39c;
+    --border: #2a2f28;
+    --accent: #56c2a2;
+    --up: #56c2a2;
+    --warn: #e0b35a;
+    --down: #e07a5f;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #10130f;
+  --surface: #171b16;
+  --surface-inset: #1d221c;
+  --ink: #ecece6;
+  --muted: #9aa39c;
+  --border: #2a2f28;
+  --accent: #56c2a2;
+  --up: #56c2a2;
+  --warn: #e0b35a;
+  --down: #e07a5f;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+}
+
+* {
+  box-sizing: border-box;
+}

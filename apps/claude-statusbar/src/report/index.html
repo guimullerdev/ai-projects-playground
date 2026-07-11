@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Claude Statusbar — Relatório</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="report">
+    <header class="report__header">
+      <div>
+        <h1 class="report__title">Uso do Claude</h1>
+        <p id="subtitle" class="report__subtitle">carregando…</p>
+      </div>
+      <button id="refresh" class="button" type="button">Atualizar</button>
+    </header>
+
+    <section class="tiles">
+      <div class="tile tile--hero">
+        <span class="tile__label">Tokens nos últimos 30 dias</span>
+        <strong id="total-tokens" class="tile__hero">—</strong>
+        <span id="total-exact" class="tile__note">—</span>
+      </div>
+      <div class="tile">
+        <span class="tile__label">Custo estimado</span>
+        <strong id="total-cost" class="tile__value">—</strong>
+        <span class="tile__note">se fosse cobrado pela API</span>
+      </div>
+      <div class="tile">
+        <span class="tile__label">Sessões</span>
+        <strong id="total-sessions" class="tile__value">—</strong>
+        <span id="total-requests" class="tile__note">—</span>
+      </div>
+      <div class="tile">
+        <span class="tile__label">Média por dia</span>
+        <strong id="daily-average" class="tile__value">—</strong>
+        <span id="busiest-day" class="tile__note">—</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Consumo por dia</h2>
+      <p class="card__note">tokens por dia, incluindo leitura de cache</p>
+      <svg id="daily-chart" class="chart" viewBox="0 0 700 210" role="img"
+           aria-label="Tokens consumidos por dia nos últimos 30 dias"></svg>
+      <details class="table-view">
+        <summary>ver tabela</summary>
+        <table class="table">
+          <thead>
+            <tr><th>Dia</th><th>Tokens</th><th>Custo estimado</th></tr>
+          </thead>
+          <tbody id="daily-table"></tbody>
+        </table>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Composição dos tokens</h2>
+      <p class="card__note">
+        quanto do consumo é releitura de contexto — cache read alto com output baixo
+        é sessão cara por contexto inchado, não por resposta longa
+      </p>
+      <svg id="mix-chart" class="chart chart--mix" viewBox="0 0 700 28" role="img"
+           aria-label="Composição dos tokens por tipo"></svg>
+      <ul id="mix-legend" class="legend"></ul>
+    </section>
+
+    <section class="columns">
+      <div class="card">
+        <h2 class="card__title">Por projeto</h2>
+        <div id="by-project" class="ranks"></div>
+      </div>
+      <div class="card">
+        <h2 class="card__title">Por modelo</h2>
+        <div id="by-model" class="ranks"></div>
+      </div>
+      <div class="card">
+        <h2 class="card__title">Por entrypoint</h2>
+        <div id="by-entrypoint" class="ranks"></div>
+      </div>
+    </section>
+
+    <footer id="footer" class="report__footer">—</footer>
+  </main>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

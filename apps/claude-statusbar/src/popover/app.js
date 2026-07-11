@@ -9,9 +9,11 @@ const els = {
   sevenDayBar: document.getElementById('seven-day-bar'),
   sevenDayReset: document.getElementById('seven-day-reset'),
   today: document.getElementById('today'),
+  openReport: document.getElementById('open-report'),
 };
 
 window.claudeStatusbar.onUpdate((payload) => render(payload));
+els.openReport.addEventListener('click', () => window.claudeStatusbar.openReport());
 
 function render(payload) {
   els.freshness.textContent = payload.freshnessLabel;
