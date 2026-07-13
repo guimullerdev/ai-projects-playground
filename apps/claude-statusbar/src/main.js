@@ -5,9 +5,13 @@ const fs = require('fs');
 const { app, BrowserWindow, Notification, ipcMain } = require('electron');
 const { menubar } = require('menubar');
 const { readLatest, freshnessLabel, countdownLabel, watchLatest, STATUSBAR_DIR } = require('./bridge');
+const { analyze } = require('./burnRate');
 const { loadReport } = require('./usage/indexer');
 
 const NOTIFY_THRESHOLDS = [90, 70]; // checked high-to-low, one notification per window
+// Below this the window is too young for a slope to extrapolate honestly — a
+// burst at 4% projects an ETA that the next quiet minute invalidates.
+const BURN_NOTIFY_FLOOR = 25;
 const NOTIFIED_PATH = path.join(STATUSBAR_DIR, 'notified.json');
 const REPORT_DAYS = 30;
 
@@ -16,7 +20,7 @@ const mb = menubar({
   icon: path.join(__dirname, 'popover', 'iconTemplate.png'),
   browserWindow: {
     width: 320,
-    height: 280,
+    height: 302,
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'popover', 'preload.js'),
@@ -29,6 +33,7 @@ const mb = menubar({
 });
 
 let lastResult = null;
+let lastBurn = null;
 let lastReport = null;
 let reportWindow = null;
 
@@ -111,10 +116,11 @@ function openReport() {
 
 function render(result) {
   lastResult = result;
+  lastBurn = analyze(result);
   mb.tray.setTitle(trayTitle(result));
   mb.tray.setToolTip(trayTooltip(result));
   if (mb.window && !mb.window.isDestroyed()) pushToWindow(result);
-  maybeNotify(result);
+  maybeNotify(result, lastBurn);
 }
 
 function pushToWindow(result) {
@@ -137,6 +143,9 @@ function serialize(result) {
       countdown: countdownLabel(result.sevenDay.resetsAt),
     },
     freshnessLabel: freshnessLabel(result),
+    burnRate: lastBurn
+      ? { ...lastBurn, etaAt: lastBurn.etaAt ? lastBurn.etaAt.toISOString() : null }
+      : null,
   };
 }
 
@@ -151,6 +160,7 @@ function trayTooltip(result) {
   const parts = [];
   if (result.fiveHour.pct !== null) parts.push(`5h: ${Math.round(result.fiveHour.pct)}%`);
   if (result.sevenDay.pct !== null) parts.push(`7d: ${Math.round(result.sevenDay.pct)}%`);
+  if (lastBurn && lastBurn.state === 'projecting') parts.push(lastBurn.label);
   parts.push(freshnessLabel(result));
   return parts.join(' · ');
 }
@@ -173,27 +183,40 @@ function saveNotified(state) {
   }
 }
 
-function maybeNotify(result) {
+function maybeNotify(result, burn) {
   if (!Notification.isSupported()) return;
   if (!result.ok || result.freshness === 'dead') return;
   const { pct, resetsAt } = result.fiveHour;
   if (pct === null || !resetsAt) return;
 
-  // Only the current window's thresholds are tracked — a new resets_at
-  // means a new window, so any older entry is stale and can be dropped.
+  // Only the current window's state is tracked — a new resets_at means a new
+  // window, so any older entry is stale and can be dropped.
   const windowKey = resetsAt.toISOString();
-  const state = loadNotified();
-  const notifiedThresholds = state.windowKey === windowKey ? state.thresholds : [];
+  const stored = loadNotified();
+  const state = stored.windowKey === windowKey
+    ? { burnNotified: false, thresholds: [], ...stored }
+    : { windowKey, thresholds: [], burnNotified: false };
 
   for (const threshold of NOTIFY_THRESHOLDS) {
-    if (pct >= threshold && !notifiedThresholds.includes(threshold)) {
+    if (pct >= threshold && !state.thresholds.includes(threshold)) {
       new Notification({
         title: 'Claude — limite de 5h',
         body: `Você já usou ${Math.round(pct)}% da janela atual (${countdownLabel(resetsAt)}).`,
       }).show();
-      saveNotified({ windowKey, thresholds: [...notifiedThresholds, threshold] });
+      saveNotified({ ...state, thresholds: [...state.thresholds, threshold] });
       return; // only the highest newly-crossed threshold per render
     }
+  }
+
+  // The pace warning is the one that arrives while there's still time to act on
+  // it: at 12%/h you're told at 40% that 100% lands before the reset, instead of
+  // finding out at 90% when the decision is already made for you.
+  if (!state.burnNotified && pct >= BURN_NOTIFY_FLOOR && burn && burn.hitsBeforeReset) {
+    new Notification({
+      title: 'Claude — ritmo de consumo',
+      body: `${burn.label}, antes do reset (${countdownLabel(resetsAt)}). Trocar de modelo ou baixar o effort agora dá pra chegar até lá.`,
+    }).show();
+    saveNotified({ ...state, burnNotified: true });
   }
 }
 

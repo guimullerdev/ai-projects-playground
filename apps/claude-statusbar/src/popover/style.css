@@ -76,6 +76,23 @@ body {
   color: var(--muted);
 }
 
+/* The projection sits under the 5h reset because it only ever talks about that
+ * window — the 7d one moves too slowly for a slope to say anything useful. */
+.window__burn {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.window__burn.is-danger {
+  color: var(--down);
+  font-weight: 600;
+}
+
+.window__burn.is-idle {
+  opacity: 0.6;
+}
+
 .popover__footer {
   display: flex;
   align-items: baseline;

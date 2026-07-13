@@ -8,6 +8,7 @@ const els = {
   sevenDayPct: document.getElementById('seven-day-pct'),
   sevenDayBar: document.getElementById('seven-day-bar'),
   sevenDayReset: document.getElementById('seven-day-reset'),
+  fiveHourBurn: document.getElementById('five-hour-burn'),
   today: document.getElementById('today'),
   openReport: document.getElementById('open-report'),
 };
@@ -21,6 +22,7 @@ function render(payload) {
 
   renderWindow(payload.fiveHour, els.fiveHourPct, els.fiveHourBar, els.fiveHourReset);
   renderWindow(payload.sevenDay, els.sevenDayPct, els.sevenDayBar, els.sevenDayReset);
+  renderBurn(payload.burnRate);
 
   els.today.textContent = todayLine(payload.today);
 }
@@ -39,6 +41,14 @@ function renderWindow(win, pctEl, barEl, resetEl) {
   barEl.classList.toggle('is-warn', pct >= 70 && pct < 90);
   barEl.classList.toggle('is-danger', pct >= 90);
   resetEl.textContent = win.countdown || 'sem dado';
+}
+
+// Only a projection that beats the reset is worth coloring: everything else is
+// context, and a red line that's always red stops being read.
+function renderBurn(burn) {
+  els.fiveHourBurn.textContent = burn ? burn.label : 'ritmo: sem dado';
+  els.fiveHourBurn.classList.toggle('is-danger', Boolean(burn && burn.hitsBeforeReset));
+  els.fiveHourBurn.classList.toggle('is-idle', Boolean(burn && burn.state === 'idle'));
 }
 
 function todayLine(today) {

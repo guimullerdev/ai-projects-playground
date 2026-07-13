@@ -144,6 +144,7 @@ module.exports = {
   freshnessLabel,
   countdownLabel,
   watchLatest,
+  safeDate,
   STATUSBAR_DIR,
   LATEST_PATH,
 };
