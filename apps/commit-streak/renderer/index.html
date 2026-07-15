@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Commit Streak</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="main">
+      <header class="topbar">
+        <h1>Commit Streak</h1>
+        <div class="topbar-actions">
+          <button id="btn-table-toggle" aria-pressed="false">Ver como tabela</button>
+          <button id="btn-theme-toggle" title="Alternar tema">🌓</button>
+        </div>
+      </header>
+
+      <section class="kpi-row" aria-label="Resumo">
+        <div class="stat-tile">
+          <div class="stat-value" id="kpi-current">–</div>
+          <div class="stat-label">Streak atual</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="kpi-longest">–</div>
+          <div class="stat-label">Maior streak</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="kpi-days365">–</div>
+          <div class="stat-label">Dias c/ commit (365)</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="kpi-coverage">–</div>
+          <div class="stat-label">Cobertura</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="kpi-lost-month">–</div>
+          <div class="stat-label">Perdidos no mês</div>
+        </div>
+      </section>
+
+      <section id="heatmap-section" aria-label="Heatmap de commits">
+        <p class="section-title">Últimas 53 semanas</p>
+        <div class="heatmap-wrap">
+          <div class="weekday-labels" aria-hidden="true">
+            <span>seg</span><span></span><span>qua</span><span></span><span>sex</span><span></span><span></span>
+          </div>
+          <div class="heatmap-scroll">
+            <div id="month-row" class="month-row" aria-hidden="true"></div>
+            <div
+              id="heatmap-grid"
+              class="heatmap-grid"
+              role="grid"
+              aria-label="Grade de commits por dia, últimas 53 semanas"
+            ></div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="legend-zero" aria-hidden="true"></span>
+          <span>sem commit</span>
+          <span>Menos</span>
+          <span class="legend-swatch" data-bucket="1" aria-hidden="true"></span>
+          <span class="legend-swatch" data-bucket="2" aria-hidden="true"></span>
+          <span class="legend-swatch" data-bucket="3" aria-hidden="true"></span>
+          <span class="legend-swatch" data-bucket="4" aria-hidden="true"></span>
+          <span>Mais</span>
+        </div>
+
+        <div id="cell-tooltip" class="cell-tooltip" role="status" hidden></div>
+      </section>
+
+      <section id="table-section" hidden aria-label="Tabela de commits por dia">
+        <p class="section-title">Tabela (mais recente primeiro)</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Dia</th>
+                <th scope="col">Commits</th>
+                <th scope="col">Repos</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <script src="js/heatmap.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

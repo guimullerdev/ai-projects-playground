@@ -112,15 +112,28 @@ function buildCommitMap(allCommits, dayStartHour) {
   return map;
 }
 
+/** `iso` shifted by `n` days (n may be negative). UTC-noon anchored, so no DST edge cases. */
+function addDays(iso, n) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Monday-first weekday index: 0=segunda ... 6=domingo. */
+function weekdayMondayFirst(iso) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return (d.getUTCDay() + 6) % 7;
+}
+
+/** The Monday of the week containing `iso` (itself if already a Monday). */
+function mondayOf(iso) {
+  return addDays(iso, -weekdayMondayFirst(iso));
+}
+
 /** current streak (ending today or yesterday) + longest streak, skipping rest days. */
 function computeStreaks(commitMap, restDays, todayLogical) {
   const restSet = new Set(restDays);
   const hasCommit = (d) => (commitMap.get(d) || []).length > 0;
-  const addDays = (iso, n) => {
-    const d = new Date(`${iso}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + n);
-    return d.toISOString().slice(0, 10);
-  };
 
   // current streak: walk backward from today; today itself only counts if
   // it already has a commit, otherwise start from yesterday.
@@ -157,6 +170,94 @@ function computeStreaks(commitMap, restDays, todayLogical) {
   }
 
   return { current, longest };
+}
+
+/** Earliest known logical date with a commit, or null if the map is empty. */
+function firstCommitDate(commitMap) {
+  const dates = [...commitMap.keys()].sort();
+  return dates.length ? dates[0] : null;
+}
+
+/**
+ * The five KPI-row numbers from the plan: current streak, longest streak,
+ * days-with-commit in the last 365, coverage %, and days lost this month.
+ */
+function computeKPIs(commitMap, restDays, todayLogical) {
+  const streaks = computeStreaks(commitMap, restDays, todayLogical);
+  const hasCommit = (d) => (commitMap.get(d) || []).length > 0;
+
+  let daysWithCommit365 = 0;
+  for (let i = 0; i < 365; i++) {
+    if (hasCommit(addDays(todayLogical, -i))) daysWithCommit365++;
+  }
+  const coveragePct = Math.round((daysWithCommit365 / 365) * 100);
+
+  const monthPrefix = todayLogical.slice(0, 7); // 'YYYY-MM'
+  const restSet = new Set(restDays);
+  let daysLostThisMonth = 0;
+  let d = `${monthPrefix}-01`;
+  while (d.startsWith(monthPrefix) && d <= todayLogical) {
+    if (!hasCommit(d) && !restSet.has(d)) daysLostThisMonth++;
+    d = addDays(d, 1);
+  }
+
+  return {
+    currentStreak: streaks.current,
+    longestStreak: streaks.longest,
+    daysWithCommit365,
+    coveragePct,
+    daysLostThisMonth,
+  };
+}
+
+/** Bucket a raw commit count into the 5-step sequential ramp (0, 1-2, 3-5, 6-9, 10+). */
+function bucketForCount(count) {
+  if (count <= 0) return 0;
+  if (count <= 2) return 1;
+  if (count <= 5) return 2;
+  if (count <= 9) return 3;
+  return 4;
+}
+
+/**
+ * Grid data for the 53-week heatmap: an array of 53 weeks, each an array of
+ * 7 day cells (Monday -> Sunday), ending on the Sunday of the current week.
+ * Each cell: { date, count, bucket, repos, status }, status one of
+ * 'before-first' | 'normal' | 'future' — the zero-day ring only applies to
+ * 'normal' (see plan.md § Design do heatmap).
+ */
+function buildHeatmapWeeks(commitMap, restDays, todayLogical, firstDate, weeksCount = 53) {
+  const restSet = new Set(restDays);
+  const endMonday = mondayOf(todayLogical);
+  const startMonday = addDays(endMonday, -(weeksCount - 1) * 7);
+
+  const days = [];
+  let cursor = startMonday;
+  for (let i = 0; i < weeksCount * 7; i++) {
+    const entries = commitMap.get(cursor) || [];
+    const count = entries.length;
+    const isRest = restSet.has(cursor);
+    let status = 'normal';
+    if (cursor > todayLogical) status = 'future';
+    else if (firstDate && cursor < firstDate) status = 'before-first';
+    else if (isRest) status = 'rest';
+
+    const byRepo = new Map();
+    for (const e of entries) byRepo.set(e.repo, (byRepo.get(e.repo) || 0) + 1);
+
+    days.push({
+      date: cursor,
+      count,
+      bucket: bucketForCount(count),
+      repos: [...byRepo.entries()].map(([repo, n]) => ({ repo, count: n })),
+      status,
+    });
+    cursor = addDays(cursor, 1);
+  }
+
+  const weeks = [];
+  for (let w = 0; w < weeksCount; w++) weeks.push(days.slice(w * 7, w * 7 + 7));
+  return weeks;
 }
 
 /** Run `tasks` (zero-arg functions returning promises) with at most `limit` in flight. */
@@ -238,4 +339,11 @@ module.exports = {
   logicalDate,
   logicalToday,
   refreshCache,
+  addDays,
+  weekdayMondayFirst,
+  mondayOf,
+  firstCommitDate,
+  computeKPIs,
+  bucketForCount,
+  buildHeatmapWeeks,
 };

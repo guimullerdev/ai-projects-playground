@@ -10,4 +10,13 @@ contextBridge.exposeInMainWorld('commitStreak', {
     ipcRenderer.on('state:update', handler);
     return () => ipcRenderer.removeListener('state:update', handler);
   },
+
+  openMainWindow: () => ipcRenderer.invoke('window:openMain'),
+  getHistory: () => ipcRenderer.invoke('history:get'),
+  setTheme: (theme) => ipcRenderer.invoke('theme:set', theme),
+  onHistoryUpdate: (callback) => {
+    const handler = (_event, history) => callback(history);
+    ipcRenderer.on('history:update', handler);
+    return () => ipcRenderer.removeListener('history:update', handler);
+  },
 });

@@ -15,6 +15,7 @@ const ICONS = { done: '●', rest: '◆', ok: '○', late: '⊙' };
 
 let tray = null;
 let popover = null;
+let mainWindow = null;
 let config = null;
 let data = null;
 let commitMap = new Map();
@@ -58,6 +59,15 @@ function computeState() {
   };
 }
 
+/** Full data for the main window: KPI row + 53-week heatmap grid. */
+function computeHistory() {
+  const today = todayLogical();
+  const kpis = scanner.computeKPIs(commitMap, config.restDays, today);
+  const firstDate = scanner.firstCommitDate(commitMap);
+  const weeks = scanner.buildHeatmapWeeks(commitMap, config.restDays, today, firstDate);
+  return { today, kpis, weeks, theme: config.theme };
+}
+
 function updateTray(state) {
   if (!tray) return;
   const glyph = ICONS[state.iconState] || ICONS.ok;
@@ -97,6 +107,9 @@ function pushState() {
   if (popover && !popover.isDestroyed()) {
     popover.webContents.send('state:update', state);
   }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('history:update', computeHistory());
+  }
   return state;
 }
 
@@ -135,12 +148,39 @@ function togglePopover() {
   popover.focus();
 }
 
+function createMainWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+    mainWindow.focus();
+    return;
+  }
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 640,
+    minWidth: 640,
+    minHeight: 480,
+    title: 'Commit Streak',
+    backgroundColor: '#fcfcfb',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
 function createTray() {
   tray = new Tray(nativeImage.createEmpty());
   tray.setTitle(` ${ICONS.ok} 0`);
   tray.on('click', togglePopover);
 
   const menu = Menu.buildFromTemplate([
+    { label: 'Abrir janela completa', click: () => createMainWindow() },
+    { type: 'separator' },
     { label: 'Rescan agora', click: () => runScan({ force: false }) },
     { label: 'Rescan completo', click: () => runScan({ force: true }) },
     { type: 'separator' },
@@ -181,6 +221,21 @@ ipcMain.handle('notify:snooze', () => {
   data.snoozeUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
   store.saveData(userDataDir, data);
   return pushState();
+});
+
+ipcMain.handle('history:get', () => computeHistory());
+
+ipcMain.handle('window:openMain', () => {
+  createMainWindow();
+});
+
+ipcMain.handle('theme:set', (_event, theme) => {
+  config.theme = theme;
+  store.saveConfig(userDataDir, config);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('history:update', computeHistory());
+  }
+  return { theme: config.theme };
 });
 
 // menu-bar app: don't quit when the (only, hidden) window loses focus

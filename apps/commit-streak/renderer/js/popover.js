@@ -6,6 +6,7 @@ const statLongest = document.getElementById('stat-longest');
 const commitList = document.getElementById('commit-list');
 const btnSnooze = document.getElementById('btn-snooze');
 const btnRescan = document.getElementById('btn-rescan');
+const btnOpenMain = document.getElementById('btn-open-main');
 
 const ICONS = { done: '●', rest: '◆', ok: '○', late: '⊙' };
 const LABELS = {
@@ -46,6 +47,7 @@ window.commitStreak.getState().then(render);
 window.commitStreak.onStateUpdate(render);
 
 btnSnooze.addEventListener('click', () => window.commitStreak.snooze().then(render));
+btnOpenMain.addEventListener('click', () => window.commitStreak.openMainWindow());
 btnRescan.addEventListener('click', () => {
   btnRescan.textContent = 'Rescaneando…';
   window.commitStreak.rescan().then((state) => {

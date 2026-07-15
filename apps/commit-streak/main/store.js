@@ -52,6 +52,7 @@ function defaultConfig() {
     quietIconHour: '13:00', // from this hour: silent, no notification, icon unchanged
     lateIconHour: '21:00', // from this hour: icon switches to the "late" shape
     loginItem: true,
+    theme: 'system', // 'system' | 'light' | 'dark' — manual toggle in the main window
   };
 }
 
