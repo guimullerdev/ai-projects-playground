@@ -19,4 +19,11 @@ contextBridge.exposeInMainWorld('commitStreak', {
     ipcRenderer.on('history:update', handler);
     return () => ipcRenderer.removeListener('history:update', handler);
   },
+
+  getGaps: () => ipcRenderer.invoke('gaps:get'),
+  markGapAsRest: (gap) => ipcRenderer.invoke('restday:markGap', gap),
+  getPendingToday: () => ipcRenderer.invoke('pending:getForToday'),
+  getRepos: () => ipcRenderer.invoke('repos:list'),
+  toggleRepo: (repo, enabled) => ipcRenderer.invoke('repos:toggle', repo, enabled),
+  openInEditor: (repoPath) => ipcRenderer.invoke('editor:open', repoPath),
 });

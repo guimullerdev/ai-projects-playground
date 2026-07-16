@@ -1,9 +1,11 @@
-const { app, Tray, Menu, BrowserWindow, ipcMain, Notification, nativeImage, powerMonitor } = require('electron');
+const { app, Tray, Menu, BrowserWindow, ipcMain, Notification, nativeImage, powerMonitor, shell } = require('electron');
 const path = require('path');
+const { execFile } = require('child_process');
 
 const store = require('./store');
 const scanner = require('./scanner');
 const scheduler = require('./scheduler');
+const pending = require('./pending');
 
 // Menu-bar only app: no dock icon, no app menu, no main window.
 app.dock?.hide();
@@ -20,14 +22,22 @@ let config = null;
 let data = null;
 let commitMap = new Map();
 let userDataDir = null;
+let lastRepoPaths = [];
 
 function todayLogical() {
   return scanner.logicalToday(config.dayStartHour);
 }
 
+/** Repo paths from the last scan, minus whatever the user toggled off. */
+function enabledRepoPaths() {
+  const disabled = new Set(config.ignoredDirRepos || []);
+  return lastRepoPaths.filter((p) => !disabled.has(path.basename(p)));
+}
+
 async function runScan({ force = false } = {}) {
   const result = await scanner.refreshCache(config, data, { force });
   commitMap = result.commitMap;
+  lastRepoPaths = result.repoPaths;
   store.saveData(userDataDir, data);
   pushState();
 }
@@ -66,6 +76,75 @@ function computeHistory() {
   const firstDate = scanner.firstCommitDate(commitMap);
   const weeks = scanner.buildHeatmapWeeks(commitMap, config.restDays, today, firstDate);
   return { today, kpis, weeks, theme: config.theme };
+}
+
+/**
+ * Gap list (streak breaks, most recent first) with today's pending work
+ * attached as a hint on each gap it plausibly explains — an unpushed commit,
+ * a dirty file, or a stash whose date falls inside (or right at the edge of)
+ * the gap. This is read-only context, never a "fill this day in" action.
+ */
+async function computeGapsWithPending() {
+  const today = todayLogical();
+  const gaps = scanner.computeGaps(commitMap, config.restDays, today, { limit: 15 });
+  const pendingList = await pending.getPendingForRepos(enabledRepoPaths());
+
+  const overlaps = (date, gap) => date >= gap.start && date <= scanner.addDays(gap.end, 1);
+
+  for (const gap of gaps) {
+    gap.hints = [];
+    for (const p of pendingList) {
+      const lines = [];
+      if (p.dirtyCount > 0 && p.oldestDirtyDate && overlaps(p.oldestDirtyDate, gap)) {
+        lines.push(`${p.dirtyCount} arquivo${p.dirtyCount === 1 ? '' : 's'} não commitado${p.dirtyCount === 1 ? '' : 's'} desde ${p.oldestDirtyDate}`);
+      }
+      const unpushedInGap = p.unpushedCommits.filter((c) => c.date && overlaps(c.date, gap));
+      if (unpushedInGap.length) {
+        lines.push(`${unpushedInGap.length} commit${unpushedInGap.length === 1 ? '' : 's'} não pushado${unpushedInGap.length === 1 ? '' : 's'}`);
+      }
+      const stashInGap = p.stashes.filter((s) => s.date && overlaps(s.date, gap));
+      if (stashInGap.length) {
+        lines.push(`${stashInGap.length} stash de ${stashInGap[0].date}`);
+      }
+      if (lines.length) gap.hints.push({ repo: p.repo, repoPath: p.repoPath, lines });
+    }
+  }
+
+  return gaps;
+}
+
+/** Pending-work list for the popover's "hoje está vazio" panel. */
+async function computePendingToday() {
+  const state = computeState();
+  if (state.committedToday || state.isRestDay) return [];
+  return pending.getPendingForRepos(enabledRepoPaths());
+}
+
+/** Repo table: name, commits in the scanned period, last commit date, enabled toggle. */
+function computeRepoList() {
+  const disabled = new Set(config.ignoredDirRepos || []);
+  const perRepo = new Map(); // repo -> {commits, lastDate}
+  for (const [date, entries] of commitMap.entries()) {
+    for (const e of entries) {
+      const cur = perRepo.get(e.repo) || { commits: 0, lastDate: null };
+      cur.commits += 1;
+      if (!cur.lastDate || date > cur.lastDate) cur.lastDate = date;
+      perRepo.set(e.repo, cur);
+    }
+  }
+  return lastRepoPaths
+    .map((repoPath) => {
+      const repo = path.basename(repoPath);
+      const stats = perRepo.get(repo) || { commits: 0, lastDate: null };
+      return { repo, repoPath, ...stats, enabled: !disabled.has(repo) };
+    })
+    .sort((a, b) => a.repo.localeCompare(b.repo));
+}
+
+function openInEditor(repoPath) {
+  execFile('open', ['-a', 'Visual Studio Code', repoPath], (err) => {
+    if (err) shell.openPath(repoPath); // VS Code not found/installed — reveal in Finder instead
+  });
 }
 
 function updateTray(state) {
@@ -236,6 +315,39 @@ ipcMain.handle('theme:set', (_event, theme) => {
     mainWindow.webContents.send('history:update', computeHistory());
   }
   return { theme: config.theme };
+});
+
+ipcMain.handle('gaps:get', () => computeGapsWithPending());
+
+ipcMain.handle('pending:getForToday', () => computePendingToday());
+
+ipcMain.handle('repos:list', () => computeRepoList());
+
+ipcMain.handle('repos:toggle', async (_event, repo, enabled) => {
+  const disabled = new Set(config.ignoredDirRepos || []);
+  if (enabled) disabled.delete(repo);
+  else disabled.add(repo);
+  config.ignoredDirRepos = [...disabled];
+  store.saveConfig(userDataDir, config);
+  await runScan({ force: false }); // toggling changes which commits count — recompute
+  return computeRepoList();
+});
+
+ipcMain.handle('restday:markGap', async (_event, { start, end }) => {
+  const restSet = new Set(config.restDays);
+  let d = start;
+  while (d <= end) {
+    restSet.add(d);
+    d = scanner.addDays(d, 1);
+  }
+  config.restDays = [...restSet];
+  store.saveConfig(userDataDir, config);
+  pushState();
+  return computeGapsWithPending();
+});
+
+ipcMain.handle('editor:open', (_event, repoPath) => {
+  openInEditor(repoPath);
 });
 
 // menu-bar app: don't quit when the (only, hidden) window loses focus

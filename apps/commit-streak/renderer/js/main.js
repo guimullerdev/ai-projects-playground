@@ -6,6 +6,9 @@ const btnTableToggle = document.getElementById('btn-table-toggle');
 const btnThemeToggle = document.getElementById('btn-theme-toggle');
 const heatmapSection = document.getElementById('heatmap-section');
 const tableSection = document.getElementById('table-section');
+const gapListEl = document.getElementById('gap-list');
+const btnGapsRefresh = document.getElementById('btn-gaps-refresh');
+const repoBodyEl = document.getElementById('repo-body');
 
 const kpiEls = {
   current: document.getElementById('kpi-current'),
@@ -57,11 +60,35 @@ function render(history) {
   renderTable(history.weeks);
 }
 
+function loadGaps() {
+  btnGapsRefresh.disabled = true;
+  btnGapsRefresh.textContent = 'Verificando…';
+  window.commitStreak.getGaps().then((gaps) => {
+    window.Gaps.renderGaps(gaps, gapListEl, {
+      onMarkRest: (gap) => window.commitStreak.markGapAsRest(gap).then(loadGaps),
+      onOpenEditor: (repoPath) => window.commitStreak.openInEditor(repoPath),
+    });
+    btnGapsRefresh.disabled = false;
+    btnGapsRefresh.textContent = 'Atualizar';
+  });
+}
+
+function loadRepos() {
+  window.commitStreak.getRepos().then((repos) => {
+    window.Gaps.renderRepos(repos, repoBodyEl, {
+      onToggle: (repo, enabled) => window.commitStreak.toggleRepo(repo, enabled).then(loadRepos),
+    });
+  });
+}
+
 window.commitStreak.getHistory().then((history) => {
   applyTheme(history.theme || 'system');
   render(history);
 });
 window.commitStreak.onHistoryUpdate(render);
+loadGaps();
+loadRepos();
+btnGapsRefresh.addEventListener('click', loadGaps);
 
 btnTableToggle.addEventListener('click', () => {
   const showingTable = !tableSection.hidden;

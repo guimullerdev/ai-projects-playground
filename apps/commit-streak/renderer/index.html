@@ -85,8 +85,34 @@
           </table>
         </div>
       </section>
+
+      <section aria-label="Lacunas">
+        <div class="section-header">
+          <p class="section-title">Lacunas</p>
+          <button id="btn-gaps-refresh">Atualizar</button>
+        </div>
+        <ul class="gap-list" id="gap-list"></ul>
+      </section>
+
+      <section aria-label="Repositórios">
+        <p class="section-title">Repositórios</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Repo</th>
+                <th scope="col">Commits</th>
+                <th scope="col">Último commit</th>
+                <th scope="col">Contabilizar</th>
+              </tr>
+            </thead>
+            <tbody id="repo-body"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
     <script src="js/heatmap.js"></script>
+    <script src="js/gaps.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

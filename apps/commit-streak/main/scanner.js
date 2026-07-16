@@ -210,6 +210,37 @@ function computeKPIs(commitMap, restDays, todayLogical) {
   };
 }
 
+/**
+ * Consecutive empty (non-rest) days, grouped into runs — "quebras de streak" —
+ * most recent first. Only looks at the past (up to and including today).
+ */
+function computeGaps(commitMap, restDays, todayLogical, { limit = 20 } = {}) {
+  const restSet = new Set(restDays);
+  const hasCommit = (d) => (commitMap.get(d) || []).length > 0;
+  const first = firstCommitDate(commitMap) || todayLogical;
+
+  const gaps = [];
+  let runStart = null;
+  let d = first;
+  while (d <= todayLogical) {
+    const empty = !hasCommit(d) && !restSet.has(d);
+    if (empty) {
+      if (runStart === null) runStart = d;
+    } else if (runStart !== null) {
+      gaps.push({ start: runStart, end: addDays(d, -1) });
+      runStart = null;
+    }
+    d = addDays(d, 1);
+  }
+  if (runStart !== null) gaps.push({ start: runStart, end: addDays(todayLogical, 0) });
+
+  gaps.reverse(); // most recent first
+  return gaps.slice(0, limit).map((g) => ({
+    ...g,
+    days: Math.round((new Date(`${g.end}T12:00:00Z`) - new Date(`${g.start}T12:00:00Z`)) / 86400000) + 1,
+  }));
+}
+
 /** Bucket a raw commit count into the 5-step sequential ramp (0, 1-2, 3-5, 6-9, 10+). */
 function bucketForCount(count) {
   if (count <= 0) return 0;
@@ -346,4 +377,5 @@ module.exports = {
   computeKPIs,
   bucketForCount,
   buildHeatmapWeeks,
+  computeGaps,
 };

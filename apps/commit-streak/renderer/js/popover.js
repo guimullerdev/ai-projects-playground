@@ -7,6 +7,8 @@ const commitList = document.getElementById('commit-list');
 const btnSnooze = document.getElementById('btn-snooze');
 const btnRescan = document.getElementById('btn-rescan');
 const btnOpenMain = document.getElementById('btn-open-main');
+const pendingBlock = document.getElementById('pending-block');
+const pendingList = document.getElementById('pending-list');
 
 const ICONS = { done: '●', rest: '◆', ok: '○', late: '⊙' };
 const LABELS = {
@@ -41,6 +43,25 @@ function render(state) {
   }
 
   btnSnooze.style.display = state.committedToday || state.isRestDay ? 'none' : '';
+
+  if (state.committedToday || state.isRestDay) {
+    pendingBlock.hidden = true;
+  } else {
+    window.commitStreak.getPendingToday().then(renderPending);
+  }
+}
+
+function renderPending(list) {
+  pendingBlock.hidden = list.length === 0;
+  pendingList.innerHTML = '';
+  for (const p of list) {
+    const li = document.createElement('li');
+    li.className = 'commit-item pending-item';
+    li.innerHTML = `<div class="commit-repo">${p.repo}</div><div class="commit-msg">${p.dirtyCount ? `${p.dirtyCount} arquivo(s) não commitado(s)` : ''}${p.unpushedCommits.length ? ` · ${p.unpushedCommits.length} não pushado(s)` : ''}${p.stashes.length ? ` · ${p.stashes.length} stash` : ''}</div>`;
+    li.title = 'Abrir no editor';
+    li.addEventListener('click', () => window.commitStreak.openInEditor(p.repoPath));
+    pendingList.appendChild(li);
+  }
 }
 
 window.commitStreak.getState().then(render);
