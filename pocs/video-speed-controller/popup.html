@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Video Speed Controller</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <h1>Velocidade do vídeo</h1>
+
+    <div class="speed-display" id="speedDisplay">1.00x</div>
+
+    <div class="slider-row">
+      <button id="decreaseBtn" title="Diminuir (S)">−</button>
+      <input type="range" id="speedSlider" min="0.1" max="4" step="0.1" value="1" />
+      <button id="increaseBtn" title="Aumentar (D)">+</button>
+    </div>
+
+    <div class="presets" id="presets">
+      <button data-speed="0.5">0.5x</button>
+      <button data-speed="1">1x</button>
+      <button data-speed="1.5">1.5x</button>
+      <button data-speed="2">2x</button>
+      <button data-speed="3">3x</button>
+      <button data-speed="4">4x</button>
+    </div>
+
+    <button id="resetBtn" class="reset">Restaurar 1x (R)</button>
+
+    <hr />
+
+    <div class="ad-section">
+      <label class="toggle-row">
+        <input type="checkbox" id="autoAdSpeedToggle" checked />
+        Acelerar em anúncios (YouTube)
+      </label>
+
+      <div class="ad-speed-row">
+        <span>Velocidade do anúncio</span>
+        <select id="adSpeedSelect">
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+          <option value="4" selected>4x</option>
+          <option value="6">6x</option>
+          <option value="8">8x</option>
+          <option value="16">16x</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="hint">Atalhos na página: <strong>S</strong> diminui, <strong>D</strong> aumenta, <strong>R</strong> reseta.</p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
