@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Color Picker</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Color Picker</h1>
+    </header>
+
+    <button id="pick-btn" class="pick-btn">
+      <span class="pick-icon">🎯</span>
+      Selecionar cor na tela
+    </button>
+
+    <p id="unsupported" class="unsupported hidden">
+      Seu navegador não suporta a captura de cor da tela (EyeDropper API).
+      Atualize para uma versão recente do Chrome ou Edge.
+    </p>
+
+    <section id="result" class="result hidden">
+      <div class="swatch" id="swatch"></div>
+
+      <div class="values">
+        <div class="value-row">
+          <span class="label">HEX</span>
+          <input type="text" id="hex-value" readonly />
+          <button class="copy-btn" data-target="hex-value">Copiar</button>
+        </div>
+        <div class="value-row">
+          <span class="label">RGB</span>
+          <input type="text" id="rgb-value" readonly />
+          <button class="copy-btn" data-target="rgb-value">Copiar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="history">
+      <div class="history-header">
+        <span>Histórico</span>
+        <button id="clear-history" class="clear-btn">Limpar</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

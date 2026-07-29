@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Color Picker",
+  "version": "1.0.0",
+  "description": "Capture a cor de qualquer elemento na tela com um clique: mire, veja o HEX/RGB e copie, sem abrir o DevTools.",
+  "permissions": ["storage", "clipboardWrite"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Color Picker"
+  }
+}
