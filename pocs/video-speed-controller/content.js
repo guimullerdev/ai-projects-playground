@@ -146,6 +146,43 @@
     return !!player && (player.classList.contains('ad-showing') || player.classList.contains('ad-interrupting'));
   }
 
+  const SKIP_BUTTON_SELECTORS = [
+    '.ytp-ad-skip-button-modern',
+    '.ytp-ad-skip-button',
+    '.ytp-skip-ad-button',
+    '.videoAdUiSkipButton',
+    '.ytp-ad-skip-button-slot button',
+    '.ytp-ad-skip-button-slot',
+  ];
+
+  function resolveClickTarget(element) {
+    // As classes acima às vezes marcam um <div> "slot" que só embrulha o
+    // <button> real com o listener de clique — buscamos o botão de fato,
+    // caindo de volta para o próprio elemento se não houver um.
+    return element.closest('button') || element.querySelector('button') || element;
+  }
+
+  function simulateClick(element) {
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const eventInit = { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y };
+    ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach((type) => {
+      const EventClass = type.startsWith('pointer') ? PointerEvent : MouseEvent;
+      element.dispatchEvent(new EventClass(type, eventInit));
+    });
+  }
+
+  function clickSkipButtonIfPresent() {
+    for (const selector of SKIP_BUTTON_SELECTORS) {
+      const match = document.querySelector(selector);
+      if (match) {
+        simulateClick(resolveClickTarget(match));
+        return;
+      }
+    }
+  }
+
   function setupYouTubeAdDetection() {
     if (!location.hostname.includes('youtube.com')) return;
 
@@ -162,6 +199,7 @@
         adActive = showingAd;
         applySpeedToAllVideos();
       }
+      if (showingAd) clickSkipButtonIfPresent();
     }
 
     const playerObserver = new MutationObserver(checkAdState);

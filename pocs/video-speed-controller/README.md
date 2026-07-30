@@ -14,6 +14,7 @@ Extensão de navegador (Manifest V3) para controlar a velocidade de reprodução
 - Velocidade sincronizada entre abas via `chrome.storage.sync`.
 - **Aceleração automática em anúncios do YouTube**: quando o player entra em estado de anúncio (classe `ad-showing`/`ad-interrupting` no `.html5-video-player`), a velocidade sobe automaticamente para 4x (configurável: 2x–16x) e volta para a velocidade normal assim que o anúncio termina. Pode ser desativado no popup.
   - Essa detecção é específica do YouTube, pois cada site marca anúncios de um jeito diferente no HTML — não há uma forma genérica e confiável de detectar "propaganda" em qualquer player de vídeo.
+  - Enquanto o anúncio está ativo, a extensão também clica automaticamente no botão "Pular anúncio" assim que ele fica disponível (checagem a cada 500ms). Como esse clique usa o mesmo toggle de "aceleração automática" do popup, desativar essa opção também desliga o skip automático.
 
 ## Como instalar (modo desenvolvedor)
 
