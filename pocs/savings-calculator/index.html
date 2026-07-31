@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quanto guardar por mês</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <p class="eyebrow">Calculadora de reserva</p>
+      <h1>Quanto guardar por mês</h1>
+      <p class="subtitle">Defina sua meta, o prazo e a taxa de juros para descobrir quanto guardar por mês. O aporte começa menor e sobe todo ano pela inflação — assim como sua meta também vale mais em dinheiro nominal com o tempo.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel inputs" aria-label="Dados da simulação">
+        <div class="field">
+          <label for="goal">Quanto quero guardar</label>
+          <div class="input-prefix">
+            <span>R$</span>
+            <input type="text" id="goal" inputmode="decimal" value="1.000.000" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="years">Prazo — anos</label>
+            <input type="number" id="years" min="0" max="80" value="10" />
+          </div>
+          <div class="field">
+            <label for="months">e meses</label>
+            <input type="number" id="months" min="0" max="11" value="0" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="rate">Juros compostos ao mês</label>
+          <div class="input-suffix">
+            <input type="number" id="rate" min="0" max="20" step="0.01" value="0.80" />
+            <span>% a.m.</span>
+          </div>
+          <p class="hint" id="rate-annual-hint"></p>
+        </div>
+
+        <div class="field">
+          <label for="inflation">Inflação esperada ao ano</label>
+          <div class="input-suffix">
+            <input type="number" id="inflation" min="0" max="30" step="0.1" value="5.5" />
+            <span>% a.a.</span>
+          </div>
+          <p class="hint">Usada para corrigir sua meta e manter o mesmo poder de compra no futuro.</p>
+        </div>
+      </section>
+
+      <section class="panel results" aria-label="Resultado da simulação">
+        <div class="hero-stat">
+          <p class="hero-label">Depósito mensal para começar (ano 1)</p>
+          <p class="hero-value" id="monthly-deposit">R$ 0,00</p>
+          <p class="hero-note" id="hero-note"></p>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat">
+            <p class="stat-label">Aporte no último ano</p>
+            <p class="stat-value" id="last-deposit">—</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">Total depositado</p>
+            <p class="stat-value" id="total-deposited">—</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">Rendido em juros</p>
+            <p class="stat-value" id="total-interest">—</p>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-heading">
+            <h2>Poder de compra ao longo dos anos</h2>
+            <p>Quanto seria preciso ter, ano a ano, para igualar o valor da sua meta hoje.</p>
+          </div>
+          <div class="chart-wrap">
+            <svg id="chart" viewBox="0 0 640 260" preserveAspectRatio="none" role="img" aria-labelledby="chart-title">
+              <title id="chart-title">Valor nominal equivalente ao poder de compra da meta, por ano</title>
+            </svg>
+            <div class="tooltip" id="tooltip" hidden>
+              <p class="tooltip-year"></p>
+              <p class="tooltip-value"></p>
+            </div>
+          </div>
+        </div>
+
+        <details class="table-toggle">
+          <summary>Ver tabela ano a ano</summary>
+          <div class="table-wrap">
+            <table id="year-table">
+              <thead>
+                <tr>
+                  <th>Ano</th>
+                  <th>Aporte mensal</th>
+                  <th>Equivalente hoje</th>
+                  <th>Diferença</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer class="footnote">
+      <p>Simulação simplificada de fins educativos. Não considera impostos, taxas de administração ou variação real da inflação e dos juros.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
