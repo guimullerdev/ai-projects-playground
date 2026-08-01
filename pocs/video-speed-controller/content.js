@@ -5,8 +5,10 @@
   const MAX_SPEED = 16;
 
   const DEFAULT_AD_SPEED = 4;
+  const MIN_AD_SPEED = 1.5;
 
   let currentSpeed = DEFAULT_SPEED;
+  let adSpeedMax = DEFAULT_AD_SPEED;
   let adSpeed = DEFAULT_AD_SPEED;
   let autoAdSpeedEnabled = true;
   let adActive = false;
@@ -26,6 +28,14 @@
 
   function effectiveSpeed() {
     return adActive ? adSpeed : currentSpeed;
+  }
+
+  // Velocidade fixa nos anúncios é um padrão fácil de detectar; sorteamos
+  // um valor a cada anúncio (entre 1.5x e o teto configurado, até 4x) para
+  // que o comportamento pareça menos automatizado.
+  function rollAdSpeed() {
+    const max = Math.max(MIN_AD_SPEED, Math.min(4, adSpeedMax));
+    adSpeed = round(MIN_AD_SPEED + Math.random() * (max - MIN_AD_SPEED));
   }
 
   function flashOverlay(video) {
@@ -136,7 +146,7 @@
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'sync') return;
     if (changes.globalSpeed) currentSpeed = clamp(changes.globalSpeed.newValue);
-    if (changes.adSpeed) adSpeed = clamp(changes.adSpeed.newValue);
+    if (changes.adSpeed) adSpeedMax = clamp(changes.adSpeed.newValue);
     if (changes.autoAdSpeedEnabled) autoAdSpeedEnabled = changes.autoAdSpeedEnabled.newValue;
     applySpeedToAllVideos();
   });
@@ -144,43 +154,6 @@
   function isYouTubeAdShowing() {
     const player = document.querySelector('.html5-video-player');
     return !!player && (player.classList.contains('ad-showing') || player.classList.contains('ad-interrupting'));
-  }
-
-  const SKIP_BUTTON_SELECTORS = [
-    '.ytp-ad-skip-button-modern',
-    '.ytp-ad-skip-button',
-    '.ytp-skip-ad-button',
-    '.videoAdUiSkipButton',
-    '.ytp-ad-skip-button-slot button',
-    '.ytp-ad-skip-button-slot',
-  ];
-
-  function resolveClickTarget(element) {
-    // As classes acima às vezes marcam um <div> "slot" que só embrulha o
-    // <button> real com o listener de clique — buscamos o botão de fato,
-    // caindo de volta para o próprio elemento se não houver um.
-    return element.closest('button') || element.querySelector('button') || element;
-  }
-
-  function simulateClick(element) {
-    const rect = element.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const eventInit = { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y };
-    ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach((type) => {
-      const EventClass = type.startsWith('pointer') ? PointerEvent : MouseEvent;
-      element.dispatchEvent(new EventClass(type, eventInit));
-    });
-  }
-
-  function clickSkipButtonIfPresent() {
-    for (const selector of SKIP_BUTTON_SELECTORS) {
-      const match = document.querySelector(selector);
-      if (match) {
-        simulateClick(resolveClickTarget(match));
-        return;
-      }
-    }
   }
 
   function setupYouTubeAdDetection() {
@@ -197,9 +170,9 @@
       const showingAd = isYouTubeAdShowing();
       if (showingAd !== adActive) {
         adActive = showingAd;
+        if (showingAd) rollAdSpeed();
         applySpeedToAllVideos();
       }
-      if (showingAd) clickSkipButtonIfPresent();
     }
 
     const playerObserver = new MutationObserver(checkAdState);
@@ -221,7 +194,8 @@
 
   chrome.storage.sync.get(['globalSpeed', 'adSpeed', 'autoAdSpeedEnabled'], (result) => {
     currentSpeed = clamp(result.globalSpeed || DEFAULT_SPEED);
-    adSpeed = clamp(result.adSpeed || DEFAULT_AD_SPEED);
+    adSpeedMax = clamp(result.adSpeed || DEFAULT_AD_SPEED);
+    adSpeed = adSpeedMax;
     autoAdSpeedEnabled = result.autoAdSpeedEnabled !== false;
     scanForVideos();
     setupYouTubeAdDetection();
