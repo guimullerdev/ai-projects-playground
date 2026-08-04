@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vale a pena converter dólar agora?</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <p class="eyebrow">Cotação do dólar</p>
+      <h1>Vale a pena converter agora?</h1>
+      <p class="subtitle">Compra e venda do dólar comercial ao longo dos últimos 30 dias, com um sinal simples baseado em onde a cotação de hoje está dentro dessa faixa. Útil pra decidir se converte hoje ou espera, antes de bater o olho na taxa da Husky.</p>
+    </header>
+
+    <div class="status-banner" id="status-banner" hidden></div>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <h2>Comparar com a Husky</h2>
+        <div class="field">
+          <label for="husky-rate">Cotação oferecida hoje</label>
+          <div class="input-prefix">
+            <span>R$</span>
+            <input type="number" id="husky-rate" inputmode="decimal" step="0.0001" placeholder="5,0500" />
+          </div>
+          <p class="hint">Cole aqui o valor de compra que o app da Husky está te oferecendo agora, pra ver o spread contra o dólar comercial.</p>
+        </div>
+
+        <button class="refresh-btn" id="refresh-btn" type="button">Atualizar cotação</button>
+        <p class="updated-at" id="updated-at"></p>
+      </aside>
+
+      <section class="panel results" aria-label="Cotação e análise">
+        <div class="hero-row">
+          <div class="hero-stat">
+            <p class="hero-label">Compra (bid)</p>
+            <p class="hero-value buy" id="bid-value">—</p>
+            <p class="hero-change" id="change-value"></p>
+          </div>
+          <div class="hero-stat">
+            <p class="hero-label">Venda (ask)</p>
+            <p class="hero-value sell" id="ask-value">—</p>
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat">
+            <p class="stat-label">Máxima hoje</p>
+            <p class="stat-value" id="high-today">—</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">Mínima hoje</p>
+            <p class="stat-value" id="low-today">—</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">Média 7 dias</p>
+            <p class="stat-value" id="avg-7">—</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">Média 30 dias</p>
+            <p class="stat-value" id="avg-30">—</p>
+          </div>
+        </div>
+
+        <div class="recommendation" id="recommendation">
+          <div class="recommendation-icon" id="recommendation-icon">—</div>
+          <div class="recommendation-body">
+            <h3 id="recommendation-title">Carregando análise…</h3>
+            <p id="recommendation-text"></p>
+            <div class="husky-compare" id="husky-compare" hidden>
+              <p id="husky-compare-text"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="news-card" id="news-card" hidden>
+          <div class="chart-heading">
+            <div>
+              <h2>Contexto de mercado</h2>
+              <p id="news-generated-at"></p>
+            </div>
+          </div>
+          <p class="news-outlook" id="news-outlook"></p>
+          <ul class="news-list" id="news-list"></ul>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-heading">
+            <div>
+              <h2>Últimos 30 dias</h2>
+              <p>Compra e venda do dólar comercial, um ponto por dia útil.</p>
+            </div>
+            <div class="legend">
+              <span><i class="swatch buy"></i> Compra</span>
+              <span><i class="swatch sell"></i> Venda</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="chart" viewBox="0 0 640 260" preserveAspectRatio="none" role="img" aria-labelledby="chart-title">
+              <title id="chart-title">Cotação de compra e venda do dólar nos últimos 30 dias</title>
+            </svg>
+            <div class="tooltip" id="tooltip" hidden>
+              <p class="tooltip-date"></p>
+              <p class="tooltip-buy"></p>
+              <p class="tooltip-sell"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="news-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
