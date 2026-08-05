@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Subscriptions Tracker",
+  "version": "1.0.0",
+  "description": "Mostra quais canais inscritos no YouTube têm vídeos novos, sem precisar de API key.",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "YouTube Subscriptions Tracker"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/feed/channels*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

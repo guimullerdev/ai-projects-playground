@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>YouTube Subscriptions Tracker</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Inscrições</h1>
+    <button id="syncBtn" title="Verificar agora">↻</button>
+  </header>
+
+  <p id="emptyState" class="empty-state hidden">
+    Nenhum canal encontrado ainda. Abra
+    <a href="https://www.youtube.com/feed/channels" target="_blank">youtube.com/feed/channels</a>
+    para importar suas inscrições.
+  </p>
+
+  <ul id="channelList"></ul>
+
+  <footer>
+    <span id="statusText"></span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
