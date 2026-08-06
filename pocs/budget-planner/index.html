@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orçamento mensal</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <p class="eyebrow">Orçamento por categoria</p>
+      <h1>Pra onde meu dinheiro vai</h1>
+      <p class="subtitle">Defina um limite mensal por categoria, registre os gastos conforme eles acontecem, e acompanhe o quanto sobra em cada uma antes do fim do mês. Tudo fica salvo só neste navegador.</p>
+    </header>
+
+    <div class="status-banner" id="status-banner" hidden></div>
+
+    <main class="layout">
+      <aside class="panel sidebar">
+        <h2>Adicionar gasto</h2>
+        <form id="expense-form">
+          <div class="field">
+            <label for="expense-date">Data</label>
+            <input type="date" id="expense-date" required />
+          </div>
+          <div class="field">
+            <label for="expense-title">Descrição</label>
+            <input type="text" id="expense-title" placeholder="Ex: Supermercado" required />
+          </div>
+          <div class="field">
+            <label for="expense-category">Categoria</label>
+            <select id="expense-category" required></select>
+          </div>
+          <div class="field">
+            <label for="expense-amount">Valor</label>
+            <div class="input-prefix">
+              <span>R$</span>
+              <input type="number" id="expense-amount" inputmode="decimal" step="0.01" min="0" placeholder="0,00" required />
+            </div>
+          </div>
+          <button class="primary-btn" type="submit">Adicionar gasto</button>
+        </form>
+
+        <div class="sidebar-divider"></div>
+
+        <h2>Limites por categoria</h2>
+        <p class="hint" id="suggest-hint">Verificando se há histórico do nubank-expenses-analyzer…</p>
+        <button class="secondary-btn" id="suggest-btn" type="button" hidden>Sugerir com base no histórico</button>
+        <div class="limits-list" id="limits-list"></div>
+
+        <div class="field new-category-field">
+          <label for="new-category">Nova categoria</label>
+          <div class="input-row">
+            <input type="text" id="new-category" placeholder="Ex: Pets" />
+            <button class="secondary-btn" id="add-category-btn" type="button">Adicionar</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel results" aria-label="Resumo do orçamento">
+        <div class="month-row">
+          <label for="month-select">Mês</label>
+          <select id="month-select"></select>
+        </div>
+
+        <div class="hero-row">
+          <div class="hero-stat">
+            <p class="hero-label">Gasto no mês</p>
+            <p class="hero-value" id="total-spent">R$ 0,00</p>
+          </div>
+          <div class="hero-stat">
+            <p class="hero-label">Orçado no mês</p>
+            <p class="hero-value budgeted" id="total-budget">R$ 0,00</p>
+          </div>
+          <div class="hero-stat">
+            <p class="hero-label">Restante</p>
+            <p class="hero-value" id="total-remaining">R$ 0,00</p>
+          </div>
+        </div>
+
+        <div class="categories-card">
+          <div class="chart-heading">
+            <div>
+              <h2>Por categoria</h2>
+              <p>Gasto acumulado no mês vs. limite definido.</p>
+            </div>
+          </div>
+          <div class="category-bars" id="category-bars"></div>
+        </div>
+
+        <div class="expenses-card">
+          <div class="chart-heading">
+            <div>
+              <h2>Gastos do mês</h2>
+              <p><span id="expense-count">0</span> lançamento(s)</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="expenses-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th>Valor</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <p class="footnote">Dados salvos localmente no navegador (localStorage), nada é enviado pra nenhum servidor. Limites são recorrentes — o mesmo valor vale todo mês, ajuste manualmente quando precisar de um limite diferente num mês específico.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
