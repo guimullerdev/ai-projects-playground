@@ -11,7 +11,7 @@ Extensão de navegador (Manifest V3) para controlar a velocidade de reprodução
   - `D` — aumenta a velocidade em 0.1x
   - `R` — restaura para 1x
 - Popup da extensão com slider, presets (0.5x a 4x) e botão de reset.
-- Velocidade sincronizada entre abas via `chrome.storage.sync`.
+- **Velocidade independente por aba**: cada aba mantém sua própria velocidade (guardada em memória pelo service worker via `chrome.storage.session`, indexada por `tabId`). Ao fechar a aba, essa entrada é removida.
 - **Aceleração automática em anúncios do YouTube**: quando o player entra em estado de anúncio (classe `ad-showing`/`ad-interrupting` no `.html5-video-player`), a velocidade sobe automaticamente para um valor sorteado (entre 1.5x e o teto configurado, no máximo 4x) e volta para a velocidade normal assim que o anúncio termina. Pode ser desativado no popup.
   - A velocidade é sorteada de novo a cada anúncio, em vez de usar sempre o mesmo valor fixo.
   - Essa detecção é específica do YouTube, pois cada site marca anúncios de um jeito diferente no HTML — não há uma forma genérica e confiável de detectar "propaganda" em qualquer player de vídeo.
@@ -26,5 +26,6 @@ Extensão de navegador (Manifest V3) para controlar a velocidade de reprodução
 ## Estrutura
 
 - `manifest.json` — configuração da extensão (MV3).
-- `content.js` / `content.css` — script injetado nas páginas que aplica a velocidade e desenha o badge.
-- `popup.html` / `popup.js` / `popup.css` — interface de controle rápido ao clicar no ícone da extensão.
+- `background.js` — service worker que guarda a velocidade de cada aba (`chrome.storage.session`, chave por `tabId`) e limpa a entrada quando a aba fecha (`chrome.tabs.onRemoved`).
+- `content.js` / `content.css` — script injetado nas páginas que aplica a velocidade e desenha o badge; busca/salva a velocidade da própria aba via mensagens para o `background.js`.
+- `popup.html` / `popup.js` / `popup.css` — interface de controle rápido ao clicar no ícone da extensão; lê e altera a velocidade da aba ativa via `background.js`.

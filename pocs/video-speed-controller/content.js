@@ -63,7 +63,7 @@
 
   function setSpeed(speed) {
     currentSpeed = clamp(speed);
-    chrome.storage.sync.set({ globalSpeed: currentSpeed });
+    chrome.runtime.sendMessage({ type: 'vsc-set-speed', speed: currentSpeed }).catch(() => {});
     applySpeedToAllVideos();
   }
 
@@ -145,10 +145,17 @@
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'sync') return;
-    if (changes.globalSpeed) currentSpeed = clamp(changes.globalSpeed.newValue);
     if (changes.adSpeed) adSpeedMax = clamp(changes.adSpeed.newValue);
     if (changes.autoAdSpeedEnabled) autoAdSpeedEnabled = changes.autoAdSpeedEnabled.newValue;
     applySpeedToAllVideos();
+  });
+
+  // Popup (aba ativa) manda a velocidade nova através do background.
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === 'vsc-apply-speed') {
+      currentSpeed = clamp(message.speed);
+      applySpeedToAllVideos();
+    }
   });
 
   function isYouTubeAdShowing() {
@@ -192,11 +199,30 @@
     setInterval(checkAdState, 500);
   }
 
-  chrome.storage.sync.get(['globalSpeed', 'adSpeed', 'autoAdSpeedEnabled'], (result) => {
-    currentSpeed = clamp(result.globalSpeed || DEFAULT_SPEED);
-    adSpeedMax = clamp(result.adSpeed || DEFAULT_AD_SPEED);
-    adSpeed = adSpeedMax;
-    autoAdSpeedEnabled = result.autoAdSpeedEnabled !== false;
+  function loadAdSettings() {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get(['adSpeed', 'autoAdSpeedEnabled'], (result) => {
+        adSpeedMax = clamp(result.adSpeed || DEFAULT_AD_SPEED);
+        adSpeed = adSpeedMax;
+        autoAdSpeedEnabled = result.autoAdSpeedEnabled !== false;
+        resolve();
+      });
+    });
+  }
+
+  // A velocidade é por aba (guardada no background), não é mais compartilhada entre abas.
+  function loadTabSpeed() {
+    return chrome.runtime
+      .sendMessage({ type: 'vsc-get-speed' })
+      .then((response) => {
+        currentSpeed = clamp(response?.speed ?? DEFAULT_SPEED);
+      })
+      .catch(() => {
+        currentSpeed = DEFAULT_SPEED;
+      });
+  }
+
+  Promise.all([loadAdSettings(), loadTabSpeed()]).then(() => {
     scanForVideos();
     setupYouTubeAdDetection();
   });

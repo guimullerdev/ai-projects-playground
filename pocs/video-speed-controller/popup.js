@@ -12,6 +12,8 @@ const presets = document.getElementById('presets');
 const autoAdSpeedToggle = document.getElementById('autoAdSpeedToggle');
 const adSpeedSelect = document.getElementById('adSpeedSelect');
 
+let activeTabId = null;
+
 function clamp(value) {
   return Math.min(MAX_SPEED, Math.max(MIN_SPEED, value));
 }
@@ -22,13 +24,24 @@ function render(speed) {
 }
 
 function setSpeed(speed) {
+  if (activeTabId == null) return;
   const clamped = clamp(Number(speed.toFixed(2)));
   render(clamped);
-  chrome.storage.sync.set({ globalSpeed: clamped });
+  chrome.runtime.sendMessage({ type: 'vsc-set-speed', tabId: activeTabId, speed: clamped });
 }
 
-chrome.storage.sync.get(['globalSpeed', 'adSpeed', 'autoAdSpeedEnabled'], (result) => {
-  render(result.globalSpeed || DEFAULT_SPEED);
+chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+  activeTabId = tab?.id ?? null;
+  if (activeTabId == null) {
+    render(DEFAULT_SPEED);
+    return;
+  }
+  chrome.runtime.sendMessage({ type: 'vsc-get-speed', tabId: activeTabId }, (response) => {
+    render(response?.speed ?? DEFAULT_SPEED);
+  });
+});
+
+chrome.storage.sync.get(['adSpeed', 'autoAdSpeedEnabled'], (result) => {
   autoAdSpeedToggle.checked = result.autoAdSpeedEnabled !== false;
   adSpeedSelect.value = String(result.adSpeed || 4);
 });
