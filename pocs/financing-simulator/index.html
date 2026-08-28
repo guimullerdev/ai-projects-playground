@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simulador de Financiamento — SAC / Price</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="topbar__brand">
+      <span class="topbar__logo" aria-hidden="true">🏠</span>
+      <span class="topbar__title">Simulador de Financiamento</span>
+    </div>
+    <div class="topbar__actions">
+      <button id="btn-import" class="btn btn--ghost" title="Importar backup (JSON)">Importar</button>
+      <button id="btn-export" class="btn btn--ghost" title="Exportar backup (JSON)">Exportar</button>
+      <input type="file" id="input-import-file" accept="application/json" hidden />
+      <button id="btn-theme-toggle" class="btn btn--icon" title="Alternar tema claro/escuro" aria-label="Alternar tema">🌙</button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ===================== VIEW: LISTA ===================== -->
+    <section id="view-list" class="view">
+      <div class="view-header">
+        <h1>Meus financiamentos</h1>
+        <button id="btn-new-financing" class="btn btn--primary">+ Novo financiamento</button>
+      </div>
+
+      <div id="list-empty-state" class="empty-state" hidden>
+        <div class="empty-state__icon">📄</div>
+        <h2>Nenhum financiamento cadastrado</h2>
+        <p>Crie o seu primeiro financiamento para simular a tabela de parcelas SAC ou Price.</p>
+        <button class="btn btn--primary" data-action="new-financing">+ Novo financiamento</button>
+      </div>
+
+      <div id="financings-grid" class="financings-grid"></div>
+    </section>
+
+    <!-- ===================== VIEW: FORMULÁRIO ===================== -->
+    <section id="view-form" class="view">
+      <div class="view-header">
+        <button class="btn btn--ghost" data-action="back-to-list">← Voltar</button>
+        <h1 id="form-title">Novo financiamento</h1>
+      </div>
+
+      <form id="financing-form" class="form-card" novalidate>
+        <input type="hidden" id="f-id" />
+
+        <div class="form-grid">
+          <label class="field field--full">
+            <span>Nome / apelido</span>
+            <input type="text" id="f-nome" required maxlength="60" placeholder="Ex: Apartamento Vila Mariana" />
+            <span class="field-error" data-error-for="f-nome"></span>
+          </label>
+
+          <label class="field">
+            <span>Valor do bem <small>(opcional)</small></span>
+            <input type="text" inputmode="decimal" id="f-valor-bem" placeholder="R$ 0,00" />
+            <span class="field-error" data-error-for="f-valor-bem"></span>
+          </label>
+
+          <label class="field">
+            <span>Valor de entrada</span>
+            <input type="text" inputmode="decimal" id="f-entrada" placeholder="R$ 0,00" />
+            <span class="field-error" data-error-for="f-entrada"></span>
+          </label>
+
+          <label class="field">
+            <span>Valor financiado</span>
+            <input type="text" inputmode="decimal" id="f-valor-financiado" required placeholder="R$ 0,00" />
+            <span class="field-hint">Calculado automaticamente (valor do bem − entrada); pode ser editado direto.</span>
+            <span class="field-error" data-error-for="f-valor-financiado"></span>
+          </label>
+
+          <label class="field">
+            <span>CET anual (%)</span>
+            <input type="text" inputmode="decimal" id="f-cet" required placeholder="0,00%" />
+            <span class="field-error" data-error-for="f-cet"></span>
+          </label>
+
+          <label class="field">
+            <span>Prazo (meses)</span>
+            <input type="number" id="f-prazo" required min="1" max="600" step="1" placeholder="360" />
+            <span class="field-error" data-error-for="f-prazo"></span>
+          </label>
+
+          <label class="field">
+            <span>Sistema de amortização</span>
+            <select id="f-tipo">
+              <option value="SAC">SAC (parcelas decrescentes)</option>
+              <option value="PRICE">Price (parcelas fixas)</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Data da 1ª parcela</span>
+            <input type="date" id="f-data-primeira" required />
+            <span class="field-error" data-error-for="f-data-primeira"></span>
+          </label>
+
+          <label class="field">
+            <span>Encargos mensais fixos <small>(opcional — seguro/tarifa)</small></span>
+            <input type="text" inputmode="decimal" id="f-encargos" placeholder="R$ 0,00" />
+          </label>
+
+          <label class="field">
+            <span>Juros de carência <small>(opcional — cobrado só na 1ª parcela)</small></span>
+            <input type="text" inputmode="decimal" id="f-juros-carencia" placeholder="R$ 0,00" />
+            <span class="field-hint">Juros do período entre a liberação do crédito e a 1ª parcela, comum em financiamento imobiliário. Some direto na parcela 1, sem afetar o resto da tabela.</span>
+          </label>
+
+          <label class="field field--full field--checkbox">
+            <input type="checkbox" id="f-pro-rata" />
+            <span>Meu banco desconta juros pro-rata em amortizações extras pagas fora do dia do vencimento <small>(comum em financiamentos imobiliários/veículos — se não tiver certeza, deixe desmarcado)</small></span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn--ghost" data-action="back-to-list">Cancelar</button>
+          <button type="submit" class="btn btn--primary">Salvar financiamento</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===================== VIEW: DASHBOARD ===================== -->
+    <section id="view-dashboard" class="view">
+      <div class="view-header">
+        <button class="btn btn--ghost" data-action="back-to-list">← Voltar</button>
+        <h1 id="dash-title">Financiamento</h1>
+        <div class="view-header__spacer"></div>
+        <button id="btn-edit-financing" class="btn btn--ghost">Editar</button>
+      </div>
+
+      <nav class="tabs" id="dash-tabs">
+        <button class="tab tab--active" data-tab="resumo">Resumo</button>
+        <button class="tab" data-tab="parcelas">Parcelas</button>
+        <button class="tab" data-tab="extras">Amortizações extras</button>
+        <button class="tab" data-tab="previsao">Previsão</button>
+        <button class="tab" data-tab="graficos">Gráficos</button>
+        <button class="tab" data-tab="comparador">Comparador SAC x Price</button>
+      </nav>
+
+      <!-- ---- TAB: RESUMO ---- -->
+      <div class="tab-panel tab-panel--active" data-panel="resumo">
+        <div class="summary-grid" id="summary-grid"></div>
+        <div class="progress-card">
+          <div class="progress-card__label">
+            <span>Progresso do financiamento</span>
+            <span id="progress-label">0 / 0 parcelas</span>
+          </div>
+          <div class="progress-bar"><div class="progress-bar__fill" id="progress-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- ---- TAB: PARCELAS ---- -->
+      <div class="tab-panel" data-panel="parcelas">
+        <div class="panel-toolbar">
+          <button id="btn-export-csv" class="btn btn--ghost">Exportar CSV</button>
+          <button id="btn-print" class="btn btn--ghost">Imprimir</button>
+        </div>
+        <div class="table-wrap">
+          <table class="installments-table" id="installments-table">
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>Data</th>
+                <th>Saldo inicial</th>
+                <th>Amortização</th>
+                <th>Juros</th>
+                <th>Parcela</th>
+                <th>Saldo final</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="installments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ---- TAB: AMORTIZAÇÕES EXTRAS ---- -->
+      <div class="tab-panel" data-panel="extras">
+        <form id="extra-form" class="form-card form-card--compact" novalidate>
+          <h2>Registrar amortização extraordinária</h2>
+          <div class="form-grid">
+            <label class="field">
+              <span>Valor do pagamento extra</span>
+              <input type="text" inputmode="decimal" id="ex-valor" required placeholder="R$ 0,00" />
+              <span class="field-error" data-error-for="ex-valor"></span>
+            </label>
+            <label class="field">
+              <span>Data do pagamento extra</span>
+              <input type="date" id="ex-data" required />
+              <span class="field-hint" id="ex-parcela-hint"></span>
+              <span class="field-error" data-error-for="ex-data"></span>
+            </label>
+            <label class="field field--full">
+              <span>O que fazer com o saldo reduzido?</span>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="ex-modo" value="prazo" checked />
+                  <span><strong>Reduzir prazo</strong> — mantém a força da parcela e quita mais cedo</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="ex-modo" value="parcela" />
+                  <span><strong>Reduzir parcela</strong> — mantém o prazo original com parcelas menores</span>
+                </label>
+              </div>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">Aplicar amortização</button>
+          </div>
+        </form>
+
+        <h2 class="section-subtitle">Histórico de amortizações extras</h2>
+        <div id="extras-empty" class="empty-state empty-state--compact" hidden>
+          <p>Nenhuma amortização extra registrada ainda.</p>
+        </div>
+        <ul class="extras-list" id="extras-list"></ul>
+      </div>
+
+      <!-- ---- TAB: PREVISÃO ---- -->
+      <div class="tab-panel" data-panel="previsao">
+        <div class="chart-card">
+          <h2>Melhor dia para amortizar</h2>
+          <p class="panel-description" id="previsao-dia-info"></p>
+        </div>
+
+        <div class="chart-card">
+          <h2>Quero quitar em um prazo específico</h2>
+          <p class="panel-description">Informe em quantos meses você quer terminar o financiamento (contando a partir da próxima parcela em aberto) e veja quanto precisa amortizar de uma vez para chegar lá.</p>
+          <div class="form-grid">
+            <label class="field">
+              <span>Quitar em quantos meses?</span>
+              <input type="number" id="prev-meses-desejados" min="1" placeholder="Ex: 36 (3 anos)" />
+            </label>
+          </div>
+          <div class="form-actions form-actions--start">
+            <button id="btn-calcular-meta" class="btn btn--ghost" type="button">Calcular valor necessário</button>
+          </div>
+          <div id="prev-meta-resultado" class="prev-result" hidden></div>
+        </div>
+
+        <div class="chart-card">
+          <h2>Simulador de amortização extra</h2>
+          <p class="panel-description">Simule um valor pontual ou um plano de vários meses (ex: "2 mil por mês durante 4 meses") e veja o impacto combinado, atualizado na hora — sem salvar nada até você decidir aplicar.</p>
+
+          <div class="form-grid">
+            <label class="field field--full">
+              <span>Como você vai amortizar?</span>
+              <div class="radio-group radio-group--inline">
+                <label class="radio-option">
+                  <input type="radio" name="prev-quando" value="data" checked />
+                  <span>Um valor, numa data específica</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="prev-quando" value="recorrente" />
+                  <span>Um valor todo mês, por um período</span>
+                </label>
+              </div>
+            </label>
+
+            <div class="fields-group" id="prev-unico-field">
+              <label class="field">
+                <span>Valor disponível</span>
+                <input type="text" inputmode="decimal" id="prev-valor" placeholder="R$ 0,00" />
+              </label>
+              <label class="field">
+                <span>Data (já preenchida com a próxima parcela)</span>
+                <input type="date" id="prev-data" />
+              </label>
+            </div>
+
+            <div class="field field--full" id="prev-recorrente-field" hidden>
+              <span>Fases do plano — ex: R$ 2.000 por 4 meses, depois R$ 3.000 por mais 4 meses</span>
+              <div id="prev-fases-list" class="fases-list"></div>
+              <button id="btn-add-fase" class="btn btn--ghost btn--small" type="button">+ Adicionar outra fase</button>
+            </div>
+
+            <label class="field field--full">
+              <span>O que fazer com o saldo reduzido?</span>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="prev-modo" value="prazo" checked />
+                  <span><strong>Reduzir prazo</strong> — mantém a força da parcela e quita mais cedo</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="prev-modo" value="parcela" />
+                  <span><strong>Reduzir parcela</strong> — mantém o prazo original com parcelas menores</span>
+                </label>
+              </div>
+            </label>
+          </div>
+          <div class="form-actions form-actions--start">
+            <button id="btn-simular-aporte" class="btn btn--ghost" type="button">Simular impacto</button>
+          </div>
+          <div id="prev-aporte-resultado" class="prev-result" hidden></div>
+        </div>
+      </div>
+
+      <!-- ---- TAB: GRÁFICOS ---- -->
+      <div class="tab-panel" data-panel="graficos">
+        <div class="chart-card">
+          <h2>Evolução do saldo devedor</h2>
+          <p class="chart-legend">
+            <span class="legend-dot legend-dot--accent"></span> Com amortizações extras
+            <span class="legend-dot legend-dot--down" id="legend-baseline"></span> <span id="legend-baseline-label">Sem amortizações extras</span>
+          </p>
+          <canvas id="chart-saldo" class="chart-canvas"></canvas>
+        </div>
+        <div class="chart-card">
+          <h2>Composição: juros x amortização</h2>
+          <p class="chart-legend">
+            <span class="legend-dot legend-dot--warn"></span> Juros
+            <span class="legend-dot legend-dot--accent"></span> Amortização
+          </p>
+          <canvas id="chart-composicao" class="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- ---- TAB: COMPARADOR ---- -->
+      <div class="tab-panel" data-panel="comparador">
+        <p class="panel-description">Comparação SAC x Price para os mesmos parâmetros deste financiamento (sem considerar amortizações extras já aplicadas).</p>
+        <div class="compare-grid" id="compare-grid"></div>
+
+        <h2 class="section-subtitle">Simulação reversa</h2>
+        <p class="panel-description">Informe a parcela máxima que cabe no seu orçamento e veja o prazo necessário (sistema Price).</p>
+        <div class="reverse-sim">
+          <label class="field">
+            <span>Parcela máxima</span>
+            <input type="text" inputmode="decimal" id="rev-parcela-maxima" placeholder="R$ 0,00" />
+          </label>
+          <button id="btn-reverse-sim" class="btn btn--ghost" type="button">Calcular prazo</button>
+          <span id="rev-result" class="reverse-sim__result"></span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="confirm-dialog" class="modal-overlay" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true">
+    <p id="confirm-message"></p>
+    <div class="modal-actions">
+      <button id="confirm-cancel" class="btn btn--ghost">Cancelar</button>
+      <button id="confirm-ok" class="btn btn--danger">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="js/ui.js"></script>
+</body>
+</html>
