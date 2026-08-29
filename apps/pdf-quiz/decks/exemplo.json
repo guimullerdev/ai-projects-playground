@@ -1,0 +1,191 @@
+{
+  "id": "exemplo",
+  "titulo": "Exemplo — HTTP e Git",
+  "fonte": {
+    "arquivo": "deck de amostra (escrito à mão, não gerado de PDF)",
+    "paginas": "—"
+  },
+  "gerado_em": "2026-08-29",
+  "questoes": [
+    {
+      "id": "q1",
+      "topico": "Status HTTP",
+      "dificuldade": "facil",
+      "enunciado": "Um endpoint responde 401 a uma requisição. O que isso comunica ao cliente?",
+      "alternativas": [
+        {
+          "id": "a",
+          "texto": "O servidor sabe quem é o cliente, mas ele não tem permissão para esse recurso",
+          "correta": false,
+          "explicacao": "Isso é 403 Forbidden. A diferença é exatamente essa: 401 é 'não sei quem você é', 403 é 'sei quem você é e mesmo assim não pode'. Reenviar credencial resolve o 401 e não resolve o 403."
+        },
+        {
+          "id": "b",
+          "texto": "O recurso não existe nesse caminho",
+          "correta": false,
+          "explicacao": "Isso é 404. Alguns servidores devolvem 404 no lugar de 403 de propósito, pra não revelar que o recurso existe — mas aí é decisão de segurança, não o significado do código."
+        },
+        {
+          "id": "c",
+          "texto": "O servidor não sabe quem é o cliente: falta autenticação ou a credencial enviada não vale",
+          "correta": true,
+          "explicacao": "Correto. 401 é sobre identidade — o servidor não conseguiu autenticar a requisição. Por isso a resposta deve vir com o cabeçalho WWW-Authenticate dizendo como se autenticar."
+        },
+        {
+          "id": "d",
+          "texto": "A requisição está malformada e o servidor não conseguiu interpretá-la",
+          "correta": false,
+          "explicacao": "Isso é 400 Bad Request. Ele fala da forma da requisição (sintaxe, corpo inválido), não de quem a enviou."
+        }
+      ],
+      "referencia": "RFC 9110 — seção 15.5"
+    },
+    {
+      "id": "q2",
+      "topico": "Status HTTP",
+      "dificuldade": "media",
+      "enunciado": "Uma API responde 201 a um POST. O que mais essa resposta deveria trazer?",
+      "alternativas": [
+        {
+          "id": "a",
+          "texto": "Um cabeçalho Retry-After dizendo quando consultar o resultado",
+          "correta": false,
+          "explicacao": "Retry-After acompanha 202 Accepted (processamento assíncrono, ainda não terminou) ou 503/429. No 201 o recurso já existe — não há o que esperar."
+        },
+        {
+          "id": "b",
+          "texto": "Um cabeçalho Location apontando para o recurso criado",
+          "correta": true,
+          "explicacao": "Correto. 201 significa que algo passou a existir, e o Location é como o cliente descobre onde. Sem ele, o cliente sabe que criou mas não sabe o quê."
+        },
+        {
+          "id": "c",
+          "texto": "O corpo obrigatoriamente vazio",
+          "correta": false,
+          "explicacao": "Quem exige corpo vazio é o 204 No Content. O 201 pode e costuma devolver a representação do recurso criado."
+        }
+      ],
+      "referencia": "RFC 9110 — seção 15.3.2"
+    },
+    {
+      "id": "q3",
+      "topico": "Cache HTTP",
+      "dificuldade": "dificil",
+      "enunciado": "Qual a diferença prática entre `Cache-Control: no-cache` e `no-store`?",
+      "alternativas": [
+        {
+          "id": "a",
+          "texto": "no-cache proíbe guardar a resposta; no-store proíbe guardar só em cache compartilhado",
+          "correta": false,
+          "explicacao": "Essa é a leitura literal do nome, e é justamente a confusão comum. Quem restringe cache compartilhado é a diretiva private, que limita o armazenamento ao navegador do usuário."
+        },
+        {
+          "id": "b",
+          "texto": "São sinônimos; no-store é a forma moderna de escrever no-cache",
+          "correta": false,
+          "explicacao": "São diretivas distintas e conviventes na mesma especificação. Tratar as duas como sinônimo é o que faz dado sensível acabar no cache do disco com um no-cache que autorizava guardar."
+        },
+        {
+          "id": "c",
+          "texto": "no-cache vale para o navegador e no-store para o servidor de origem",
+          "correta": false,
+          "explicacao": "As duas são instruções para qualquer cache no caminho — navegador, proxy ou CDN. A separação por tipo de cache é feita por private e public, não por essas."
+        },
+        {
+          "id": "d",
+          "texto": "no-cache permite guardar a resposta, mas obriga a revalidar antes de reusar; no-store proíbe guardar",
+          "correta": true,
+          "explicacao": "Correto. O nome de no-cache engana: ele autoriza o armazenamento e exige a revalidação (com ETag ou Last-Modified) a cada uso. no-store é o que realmente impede a resposta de tocar o disco — é o que se usa em dado sensível."
+        }
+      ],
+      "referencia": "RFC 9111 — seção 5.2.2"
+    },
+    {
+      "id": "q4",
+      "topico": "Git — histórico",
+      "dificuldade": "media",
+      "enunciado": "`git revert` e `git reset --hard` desfazem um commit. Qual a diferença?",
+      "alternativas": [
+        {
+          "id": "a",
+          "texto": "revert cria um novo commit que desfaz as mudanças; reset --hard move a branch para trás e descarta o que veio depois",
+          "correta": true,
+          "explicacao": "Correto. revert é aditivo — o histórico continua contando que aquilo existiu e foi desfeito, o que o torna seguro em branch já pushada. reset reescreve a posição da branch, então quem já puxou fica com história divergente."
+        },
+        {
+          "id": "b",
+          "texto": "revert desfaz só no working tree; reset --hard desfaz também no histórico remoto",
+          "correta": false,
+          "explicacao": "Nenhum dos dois toca o remoto: os dois são locais até um push. E revert não para no working tree — ele commita o desfazimento."
+        },
+        {
+          "id": "c",
+          "texto": "revert desfaz o último commit e reset --hard desfaz qualquer commit pelo hash",
+          "correta": false,
+          "explicacao": "Os dois aceitam qualquer referência — `git revert <hash>` desfaz um commit antigo no meio do histórico. A diferença é o que acontece com a história, não qual commit dá pra alcançar."
+        }
+      ],
+      "referencia": "git-revert(1) e git-reset(1)"
+    },
+    {
+      "id": "q5",
+      "topico": "Git — histórico",
+      "dificuldade": "facil",
+      "enunciado": "O que `git commit --amend` faz com o commit anterior?",
+      "alternativas": [
+        {
+          "id": "a",
+          "texto": "Edita o commit existente, mantendo o mesmo hash",
+          "correta": false,
+          "explicacao": "Commits são imutáveis: o hash é derivado do conteúdo, da mensagem, do autor e do commit pai. Mudar qualquer um desses produz outro objeto, necessariamente com outro hash."
+        },
+        {
+          "id": "b",
+          "texto": "Substitui o commit por um novo, com hash diferente",
+          "correta": true,
+          "explicacao": "Correto. O commit antigo não é editado — é trocado. Como o hash muda, amendar algo já pushado exige force push e quebra a cópia de quem já puxou."
+        },
+        {
+          "id": "c",
+          "texto": "Cria um commit extra em cima, com a mensagem corrigida",
+          "correta": false,
+          "explicacao": "Isso é o que um commit normal de correção faria. O amend existe justamente pra não deixar esse commit extra no histórico."
+        }
+      ],
+      "referencia": "git-commit(1) — opção --amend"
+    },
+    {
+      "id": "q6",
+      "topico": "Git — área de stage",
+      "dificuldade": "media",
+      "enunciado": "Um arquivo já commitado foi adicionado ao `.gitignore`, mas continua aparecendo em `git status` quando muda. Por quê?",
+      "alternativas": [
+        {
+          "id": "a",
+          "texto": "O .gitignore só passa a valer depois do próximo commit dele",
+          "correta": false,
+          "explicacao": "As regras valem assim que o arquivo é salvo, sem precisar commitar. O que não acontece é o efeito retroativo sobre o que já está no índice."
+        },
+        {
+          "id": "b",
+          "texto": "O padrão escrito no .gitignore está errado e não casa com o caminho",
+          "correta": false,
+          "explicacao": "É uma causa real de arquivo não ignorado — e vale conferir com `git check-ignore -v <arquivo>` —, mas não explica o caso de um arquivo já commitado: mesmo com o padrão certo, ele continuaria aparecendo."
+        },
+        {
+          "id": "c",
+          "texto": "O .gitignore só vale para arquivos não rastreados; o arquivo continua rastreado até sair do índice",
+          "correta": true,
+          "explicacao": "Correto. Ignorar é uma regra sobre o que o git considera ao descobrir arquivos novos. Pra parar de rastrear, é preciso `git rm --cached <arquivo>` — o .gitignore sozinho não desfaz o rastreamento."
+        },
+        {
+          "id": "d",
+          "texto": "O arquivo está no stash e por isso o git o mantém visível",
+          "correta": false,
+          "explicacao": "O stash guarda mudanças fora do working tree e não interfere em quais arquivos são rastreados nem no que o status mostra depois."
+        }
+      ],
+      "referencia": "gitignore(5) — \"já rastreado\""
+    }
+  ]
+}

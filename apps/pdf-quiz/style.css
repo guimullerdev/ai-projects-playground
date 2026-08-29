@@ -1,0 +1,476 @@
+/* Mesmos tokens do resto do repo (cambio-ai, commit-streak, dollar-cost-analyzer),
+ * pra que os projetos tenham a mesma cara. --up/--down viram acerto/erro aqui:
+ * é a mesma semântica de "bom/ruim", só que num quiz. */
+
+:root {
+  color-scheme: light;
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface-inset: #f0efe9;
+  --ink: #1c211e;
+  --muted: #5d655f;
+  --border: #e1ded4;
+  --accent: #1f6f5c;
+  --grid-line: #e6e3d8;
+  --up: #1f6f5c;
+  --down: #b3402a;
+  --up-soft: #e6f1ec;
+  --down-soft: #f7e9e5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #10130f;
+    --surface: #171b16;
+    --surface-inset: #1d221c;
+    --ink: #ecece6;
+    --muted: #9aa39c;
+    --border: #2a2f28;
+    --accent: #56c2a2;
+    --grid-line: #262b23;
+    --up: #56c2a2;
+    --down: #e07a5f;
+    --up-soft: #17271f;
+    --down-soft: #2a1d17;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #10130f;
+  --surface: #171b16;
+  --surface-inset: #1d221c;
+  --ink: #ecece6;
+  --muted: #9aa39c;
+  --border: #2a2f28;
+  --accent: #56c2a2;
+  --grid-line: #262b23;
+  --up: #56c2a2;
+  --down: #e07a5f;
+  --up-soft: #17271f;
+  --down-soft: #2a1d17;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--surface-inset);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* ---------- topo ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 20px 8px;
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.topbar__actions {
+  display: flex;
+  gap: 8px;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px 20px 64px;
+}
+
+.tela[hidden] { display: none; }
+
+/* ---------- botões ---------- */
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: 0.45; cursor: default; filter: none; }
+
+.btn--ghost {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+  font-weight: 500;
+}
+
+/* ---------- catálogo ---------- */
+
+.aviso {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-inset);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.aviso[hidden] { display: none; }
+
+.catalogo {
+  display: grid;
+  gap: 12px;
+}
+
+.deck {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.deck__info { min-width: 0; }
+
+.deck__titulo {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.deck__meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.deck__acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.dica {
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- quiz ---------- */
+
+.quiz__barra {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--grid-line);
+  overflow: hidden;
+}
+
+.quiz__progresso {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 180ms ease;
+}
+
+.quiz__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz__streak { color: var(--up); font-weight: 600; }
+
+.quiz__topico {
+  margin: 20px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.quiz__enunciado {
+  margin: 0 0 20px;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.alternativas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.alternativa {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.alternativa:hover:not(:disabled) { border-color: var(--accent); }
+.alternativa:disabled { cursor: default; }
+
+.alternativa__tecla {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--surface-inset);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+}
+
+/* Verde/vermelho nunca aparecem sozinhos: a alternativa certa também ganha ✓ e
+ * a escolhida errada ganha ✗, pra não depender de cor. */
+.alternativa.is-correta {
+  border-color: var(--up);
+  background: var(--up-soft);
+}
+
+.alternativa.is-correta .alternativa__tecla {
+  background: var(--up);
+  color: var(--bg);
+}
+
+.alternativa.is-errada {
+  border-color: var(--down);
+  background: var(--down-soft);
+}
+
+.alternativa.is-errada .alternativa__tecla {
+  background: var(--down);
+  color: var(--bg);
+}
+
+.feedback {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.feedback[hidden] { display: none; }
+.feedback.is-acerto { border-left-color: var(--up); }
+.feedback.is-erro { border-left-color: var(--down); }
+
+.feedback__veredito {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.feedback.is-acerto .feedback__veredito { color: var(--up); }
+.feedback.is-erro .feedback__veredito { color: var(--down); }
+
+.feedback__bloco { margin: 0; font-size: 14px; }
+.feedback__bloco strong { font-weight: 600; }
+
+.feedback__referencia {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quiz__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* ---------- resultado ---------- */
+
+.resultado__titulo {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.resultado__numeros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.numero {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px 16px;
+}
+
+.numero__label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.numero__valor {
+  display: block;
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.resultado__bloco { margin-bottom: 28px; }
+.resultado__bloco[hidden] { display: none; }
+
+.resultado__subtitulo {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.topicos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.topico {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.topico__nome { font-weight: 500; }
+
+.topico__placar {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.topico__trilho {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--grid-line);
+  overflow: hidden;
+}
+
+.topico__trilho.is-zero { background: var(--down-soft); box-shadow: inset 0 0 0 1px var(--down); }
+
+.topico__preenchido { height: 100%; background: var(--up); }
+.topico.is-fraco .topico__preenchido { background: var(--down); }
+
+.erros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.erro {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--down);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.erro__enunciado { margin: 0; font-weight: 600; font-size: 14px; }
+.erro__linha { margin: 0; font-size: 14px; }
+.erro__referencia { margin: 0; color: var(--muted); font-size: 13px; }
+
+.resultado__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- drop ---------- */
+
+.dropzone {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border: 2px dashed var(--accent);
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.dropzone[hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .resultado__numeros { grid-template-columns: 1fr; }
+  .deck { flex-direction: column; align-items: stretch; }
+}

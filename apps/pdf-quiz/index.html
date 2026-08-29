@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="topbar__title">PDF Quiz</h1>
+    <div class="topbar__actions">
+      <label class="btn btn--ghost" for="import">Importar deck</label>
+      <input id="import" type="file" accept=".json,application/json" hidden />
+      <button id="theme" class="btn btn--ghost" type="button" title="Alternar tema">◐</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Tela 1 — catálogo -->
+    <section id="tela-catalogo" class="tela">
+      <p id="catalogo-aviso" class="aviso" hidden></p>
+      <div id="catalogo" class="catalogo"></div>
+      <p class="dica">Arraste um <code>.json</code> para a página para jogar um deck que não está na pasta.</p>
+    </section>
+
+    <!-- Tela 2 — quiz -->
+    <section id="tela-quiz" class="tela" hidden>
+      <div class="quiz__barra">
+        <div id="progresso" class="quiz__progresso"></div>
+      </div>
+
+      <header class="quiz__header">
+        <span id="quiz-passo" class="quiz__passo"></span>
+        <span id="quiz-streak" class="quiz__streak"></span>
+      </header>
+
+      <p id="quiz-topico" class="quiz__topico"></p>
+      <h2 id="quiz-enunciado" class="quiz__enunciado"></h2>
+
+      <ul id="quiz-alternativas" class="alternativas"></ul>
+
+      <div id="quiz-feedback" class="feedback" hidden></div>
+
+      <footer class="quiz__footer">
+        <button id="quiz-sair" class="btn btn--ghost" type="button">Sair</button>
+        <button id="quiz-avancar" class="btn" type="button" hidden></button>
+      </footer>
+    </section>
+
+    <!-- Tela 3 — resultado -->
+    <section id="tela-resultado" class="tela" hidden>
+      <h2 id="resultado-titulo" class="resultado__titulo"></h2>
+
+      <div class="resultado__numeros">
+        <div class="numero">
+          <span class="numero__label">Pontos</span>
+          <strong id="resultado-score" class="numero__valor"></strong>
+        </div>
+        <div class="numero">
+          <span class="numero__label">Acertos</span>
+          <strong id="resultado-acertos" class="numero__valor"></strong>
+        </div>
+        <div class="numero">
+          <span class="numero__label">Tempo</span>
+          <strong id="resultado-tempo" class="numero__valor"></strong>
+        </div>
+      </div>
+
+      <section class="resultado__bloco">
+        <h3 class="resultado__subtitulo">Por tópico</h3>
+        <ul id="resultado-topicos" class="topicos"></ul>
+      </section>
+
+      <section id="resultado-bloco-erros" class="resultado__bloco">
+        <h3 class="resultado__subtitulo">O que revisar</h3>
+        <ul id="resultado-erros" class="erros"></ul>
+      </section>
+
+      <footer class="resultado__acoes">
+        <button id="resultado-refazer-erros" class="btn" type="button">Refazer só os erros</button>
+        <button id="resultado-refazer" class="btn btn--ghost" type="button">Refazer tudo</button>
+        <button id="resultado-catalogo" class="btn btn--ghost" type="button">Voltar ao catálogo</button>
+      </footer>
+    </section>
+  </main>
+
+  <div id="dropzone" class="dropzone" hidden><span>Solte o deck aqui</span></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

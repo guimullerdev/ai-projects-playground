@@ -1,0 +1,8 @@
+# Material de estudo: pesado e com direito autoral
+pdfs/
+
+# Decks gerados são material derivado do PDF — não vão pro git.
+# O catálogo também não: ele muda toda vez que eu gero um deck local,
+# e o front cai no exemplo quando ele não existe.
+decks/*.json
+!decks/exemplo.json
