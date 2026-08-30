@@ -7,7 +7,8 @@
     catalogo: [],      // entradas do decks/index.json
     importados: {},    // decks que vieram por arquivo, por id
     deck: null,        // deck carregado
-    sessao: null
+    sessao: null,
+    resultado: null    // resultado da última sessão, pro export do Obsidian
   };
 
   var el = {};
@@ -17,6 +18,9 @@
    'resultado-titulo', 'resultado-score', 'resultado-acertos', 'resultado-tempo',
    'resultado-topicos', 'resultado-erros', 'resultado-bloco-erros',
    'resultado-refazer-erros', 'resultado-refazer', 'resultado-catalogo',
+   'resultado-exportar-erros', 'resultado-exportar-flashcards',
+   'progresso-painel', 'progresso-fracos', 'progresso-vazio', 'progresso-resumo',
+   'progresso-exportar', 'progresso-importar',
    'import', 'theme', 'dropzone'].forEach(function (id) {
     el[id] = document.getElementById(id);
   });
@@ -74,7 +78,62 @@
     if (html) el['catalogo-aviso'].innerHTML = html;
   }
 
+  /* Painel de fraquezas: soma todas as tentativas de todos os decks. Some
+   * quando não há evidência — painel vazio no primeiro acesso é ruído. */
+  function desenharProgresso() {
+    var fracos = PQStorage.pontosFracos(2);
+    var dados = PQStorage.lerTudo();
+    var deckIds = Object.keys(dados);
+    var tentativas = deckIds.reduce(function (t, id) { return t + (dados[id].tentativas || 0); }, 0);
+
+    el['progresso-painel'].hidden = !tentativas;
+    if (!tentativas) return;
+
+    el['progresso-resumo'].textContent = tentativas +
+      (tentativas === 1 ? ' tentativa em ' : ' tentativas em ') +
+      deckIds.length + (deckIds.length === 1 ? ' deck' : ' decks');
+
+    el['progresso-vazio'].hidden = fracos.length > 0;
+    el['progresso-fracos'].innerHTML = '';
+
+    fracos.slice(0, 6).forEach(function (f) {
+      var proporcao = f.acertos / f.total;
+      var li = document.createElement('li');
+      li.className = 'topico' + (proporcao < 0.6 ? ' is-fraco' : '');
+
+      var nome = document.createElement('span');
+      nome.className = 'topico__nome';
+      nome.textContent = f.topico;
+
+      var placar = document.createElement('span');
+      placar.className = 'topico__placar';
+      placar.textContent = f.acertos + '/' + f.total;
+
+      var trilho = document.createElement('span');
+      trilho.className = 'topico__trilho' + (f.acertos === 0 ? ' is-zero' : '');
+      var preenchido = document.createElement('span');
+      preenchido.className = 'topico__preenchido';
+      preenchido.style.display = 'block';
+      preenchido.style.width = proporcao * 100 + '%';
+      trilho.appendChild(preenchido);
+
+      li.appendChild(nome);
+      li.appendChild(placar);
+      li.appendChild(trilho);
+
+      if (f.decks.length > 1) {
+        var decks = document.createElement('span');
+        decks.className = 'topico__decks';
+        decks.textContent = 'em ' + f.decks.length + ' decks';
+        li.appendChild(decks);
+      }
+
+      el['progresso-fracos'].appendChild(li);
+    });
+  }
+
   function desenharCatalogo() {
+    desenharProgresso();
     var lista = estado.catalogo.slice();
     Object.keys(estado.importados).forEach(function (id) {
       var jaTem = lista.some(function (d) { return d.id === id; });
@@ -322,6 +381,7 @@
     var s = estado.sessao;
     var r = PQQuiz.resultado(s);
     PQStorage.registrarTentativa(s.deck.id, r);
+    estado.resultado = r;
 
     el['resultado-titulo'].textContent = s.deck.titulo + (r.parcial ? ' — revisão dos erros' : '');
     el['resultado-score'].textContent = r.score + '/' + r.maxScore;
@@ -333,6 +393,7 @@
     desenharErros(r.erros);
 
     el['resultado-refazer-erros'].disabled = !r.erros.length;
+    el['resultado-exportar-erros'].disabled = !r.erros.length;
     mostrar('tela-resultado');
   }
 
@@ -466,6 +527,57 @@
   el['resultado-refazer-erros'].addEventListener('click', function () {
     var ids = PQQuiz.resultado(estado.sessao).erradas;
     if (ids.length) abrir(estado.deck, ids);
+  });
+
+  el['resultado-exportar-erros'].addEventListener('click', function () {
+    if (estado.deck && estado.resultado) PQExport.baixarErros(estado.deck, estado.resultado);
+  });
+
+  // Flashcards saem do deck inteiro, não só dos erros: o que eu acertei hoje é
+  // justamente o que a repetição espaçada precisa reagendar pra daqui a semanas.
+  el['resultado-exportar-flashcards'].addEventListener('click', function () {
+    if (estado.deck) PQExport.baixarFlashcards(estado.deck, null);
+  });
+
+  el['progresso-exportar'].addEventListener('click', function () {
+    var dados = PQStorage.lerTudo();
+    if (!Object.keys(dados).length) {
+      aviso('Não há progresso para exportar ainda.');
+      return;
+    }
+    PQExport.baixarProgresso(dados);
+  });
+
+  /* Import de progresso substitui em vez de mesclar. Mesclar duas linhas do
+   * tempo do mesmo deck exigiria inventar o que fazer com tentativas e
+   * recordes concorrentes; restaurar backup é o caso real, e restaurar é
+   * substituir. Por isso a confirmação diz exatamente o que se perde. */
+  el['progresso-importar'].addEventListener('change', function (e) {
+    var arquivo = e.target.files[0];
+    e.target.value = '';
+    if (!arquivo) return;
+
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      var lido = PQExport.lerProgresso(leitor.result);
+      if (lido.erro) {
+        aviso(lido.erro);
+        return;
+      }
+
+      var atuais = Object.keys(PQStorage.lerTudo()).length;
+      var chegando = Object.keys(lido.progresso).length;
+      var pergunta = 'Substituir o progresso atual (' + atuais +
+        (atuais === 1 ? ' deck' : ' decks') + ') pelo backup de ' + lido.exportado_em +
+        ' (' + chegando + (chegando === 1 ? ' deck' : ' decks') + ')?';
+
+      if (!window.confirm(pergunta)) return;
+
+      PQStorage.substituirTudo(lido.progresso);
+      aviso('Progresso restaurado do backup de ' + lido.exportado_em + '.');
+      desenharCatalogo();
+    };
+    leitor.readAsText(arquivo);
   });
 
   el.import.addEventListener('change', function (e) {

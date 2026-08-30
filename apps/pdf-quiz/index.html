@@ -20,6 +20,23 @@
     <!-- Tela 1 — catálogo -->
     <section id="tela-catalogo" class="tela">
       <p id="catalogo-aviso" class="aviso" hidden></p>
+
+      <section id="progresso-painel" class="painel" hidden>
+        <header class="painel__header">
+          <h2 class="painel__titulo">Onde eu erro mais</h2>
+          <span id="progresso-resumo" class="painel__resumo"></span>
+        </header>
+        <ul id="progresso-fracos" class="topicos"></ul>
+        <p id="progresso-vazio" class="painel__vazio" hidden>
+          Ainda não há erro repetido o bastante para virar padrão — jogue mais um deck.
+        </p>
+        <footer class="painel__acoes">
+          <button id="progresso-exportar" class="btn btn--ghost" type="button">Exportar progresso</button>
+          <label class="btn btn--ghost" for="progresso-importar">Importar progresso</label>
+          <input id="progresso-importar" type="file" accept=".json,application/json" hidden />
+        </footer>
+      </section>
+
       <div id="catalogo" class="catalogo"></div>
       <p class="dica">Arraste um <code>.json</code> para a página para jogar um deck que não está na pasta.</p>
     </section>
@@ -82,12 +99,25 @@
         <button id="resultado-refazer" class="btn btn--ghost" type="button">Refazer tudo</button>
         <button id="resultado-catalogo" class="btn btn--ghost" type="button">Voltar ao catálogo</button>
       </footer>
+
+      <section class="resultado__obsidian">
+        <h3 class="resultado__subtitulo">Levar pro Obsidian</h3>
+        <div class="resultado__acoes">
+          <button id="resultado-exportar-erros" class="btn btn--ghost" type="button">Exportar erros (.md)</button>
+          <button id="resultado-exportar-flashcards" class="btn btn--ghost" type="button">Exportar flashcards (.md)</button>
+        </div>
+        <p class="dica">
+          Os erros viram uma nota com o tópico em <code>[[wikilink]]</code>. Os flashcards saem no
+          formato do plugin <em>spaced repetition</em> — a repetição espaçada fica com ele.
+        </p>
+      </section>
     </section>
   </main>
 
   <div id="dropzone" class="dropzone" hidden><span>Solte o deck aqui</span></div>
 
   <script src="js/storage.js"></script>
+  <script src="js/export.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/app.js"></script>
 </body>

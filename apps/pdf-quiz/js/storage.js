@@ -36,7 +36,9 @@ var PQStorage = (function () {
       tentativas: registro.tentativas || 0,
       melhor_score: registro.melhor_score || 0,
       ultima: registro.ultima || null,
-      erradas: Array.isArray(registro.erradas) ? registro.erradas : []
+      erradas: Array.isArray(registro.erradas) ? registro.erradas : [],
+      // Registro do v1 não tinha tópicos: ausente vira vazio em vez de quebrar.
+      topicos: registro.topicos && typeof registro.topicos === 'object' ? registro.topicos : {}
     };
   }
 
@@ -58,6 +60,22 @@ var PQStorage = (function () {
       if (erradas.indexOf(id) === -1) erradas.push(id);
     });
 
+    // Soma por tópico atravessando tentativas: o relatório do v1 só enxergava a
+    // sessão que acabou, e uma sessão não diz onde eu erro sempre.
+    var topicos = {};
+    var anteriores = atual.topicos && typeof atual.topicos === 'object' ? atual.topicos : {};
+    Object.keys(anteriores).forEach(function (nome) {
+      topicos[nome] = {
+        total: anteriores[nome].total || 0,
+        acertos: anteriores[nome].acertos || 0
+      };
+    });
+    (resultado.topicos || []).forEach(function (t) {
+      if (!topicos[t.topico]) topicos[t.topico] = { total: 0, acertos: 0 };
+      topicos[t.topico].total += t.total;
+      topicos[t.topico].acertos += t.acertos;
+    });
+
     dados[deckId] = {
       tentativas: atual.tentativas + 1,
       // Só a sessão completa disputa o recorde: um "refazer só os erros" tem
@@ -66,7 +84,8 @@ var PQStorage = (function () {
         ? atual.melhor_score
         : Math.max(atual.melhor_score || 0, resultado.score),
       ultima: hoje(),
-      erradas: erradas
+      erradas: erradas,
+      topicos: topicos
     };
 
     gravarTudo(dados);
@@ -80,9 +99,52 @@ var PQStorage = (function () {
     return d.getFullYear() + '-' + mes + '-' + dia;
   }
 
+  /* Tópicos fracos somando TODAS as tentativas de TODOS os decks.
+   *
+   * Atravessar decks é o ponto: "controle de congestionamento" pode aparecer em
+   * dois capítulos, e o que eu quero saber é se erro o conceito — não se errei
+   * naquele deck. Tópico só entra se já foi visto o bastante pra significar
+   * alguma coisa (mínimo de 2 respostas), senão um chute isolado lidera a lista. */
+  function pontosFracos(minimo) {
+    var piso = minimo || 2;
+    var dados = lerTudo();
+    var mapa = {};
+
+    Object.keys(dados).forEach(function (deckId) {
+      var topicos = dados[deckId].topicos || {};
+      Object.keys(topicos).forEach(function (nome) {
+        if (!mapa[nome]) mapa[nome] = { topico: nome, total: 0, acertos: 0, decks: [] };
+        mapa[nome].total += topicos[nome].total || 0;
+        mapa[nome].acertos += topicos[nome].acertos || 0;
+        if (mapa[nome].decks.indexOf(deckId) === -1) mapa[nome].decks.push(deckId);
+      });
+    });
+
+    return Object.keys(mapa)
+      .map(function (k) { return mapa[k]; })
+      .filter(function (t) { return t.total >= piso && t.acertos < t.total; })
+      .sort(function (a, b) {
+        var diff = a.acertos / a.total - b.acertos / b.total;
+        // Empate de proporção: quem tem mais respostas vem antes, porque é
+        // evidência mais forte de que o buraco é real.
+        return diff !== 0 ? diff : b.total - a.total;
+      });
+  }
+
+  function substituirTudo(dados) {
+    return gravarTudo(dados || {});
+  }
+
+  function limpar() {
+    return gravarTudo({});
+  }
+
   return {
     lerTudo: lerTudo,
     lerDeck: lerDeck,
-    registrarTentativa: registrarTentativa
+    registrarTentativa: registrarTentativa,
+    pontosFracos: pontosFracos,
+    substituirTudo: substituirTudo,
+    limpar: limpar
   };
 })();

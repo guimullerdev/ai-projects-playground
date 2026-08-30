@@ -39,6 +39,9 @@ de ~10–20 páginas, e 15–20 questões é o tamanho de uma sessão que se ter
   Atalhos: `1`–`5` escolhe, `Enter` avança.
 - **Resultado** — pontos, % de acerto, tempo, quebra por tópico (pior primeiro) e
   a lista do que revisar, com a referência de cada erro.
+- **Onde eu erro mais** — painel no topo do catálogo somando **todas** as
+  tentativas de **todos** os decks. Um tópico só entra depois de 2 respostas,
+  senão um chute isolado lidera a lista.
 
 Pontuação: acerto vale o peso da dificuldade (fácil 1, média 2, difícil 3), pra
 deck fácil não inflar o número. Sem penalidade por erro.
@@ -50,6 +53,31 @@ da última e o conjunto de questões erradas — que é o que alimenta o "só os
 errei". Questão acertada numa tentativa seguinte sai do conjunto.
 
 Nada sai da máquina: sem backend, sem telemetria, sem request pra fora.
+
+**Backup**: `Exportar progresso` baixa tudo num JSON e `Importar progresso`
+restaura — porque limpar o navegador apaga o `localStorage`. O import
+**substitui** o progresso atual (com confirmação), já que restaurar backup é
+isso; mesclar duas linhas do tempo do mesmo deck exigiria inventar o que fazer
+com tentativas e recordes concorrentes.
+
+## Levar pro Obsidian
+
+Dois botões na tela de resultado, os dois gerando markdown pra baixar — sem
+plugin, sem API, sem caminho de vault no código:
+
+- **Exportar erros (.md)** — uma nota da sessão, com os erros agrupados por
+  tópico e o tópico em `[[wikilink]]`. É o que faz o vault responder "todas as
+  vezes que errei em X", atravessando decks e livros, sem eu escrever agregação
+  nenhuma.
+- **Exportar flashcards (.md)** — o deck inteiro no formato do plugin
+  [obsidian-spaced-repetition](https://github.com/st3v3nmw/obsidian-spaced-repetition)
+  (pergunta, `?` sozinho na linha, resposta), com a tag `#flashcards/<deck>`. A
+  explicação da correta entra na resposta: cartão com só a alternativa certa
+  treina reconhecer a frase, não o conceito.
+
+A repetição espaçada fica com o plugin de propósito — agendamento e fila do dia
+são problema resolvido, e este app faz o que ele não faz: múltipla escolha com
+explicação por alternativa.
 
 ## O que não vai pro git
 

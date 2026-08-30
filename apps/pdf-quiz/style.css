@@ -142,6 +142,64 @@ main {
 
 .aviso[hidden] { display: none; }
 
+/* ---------- painel de progresso ---------- */
+
+.painel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.painel[hidden] { display: none; }
+
+.painel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.painel__titulo {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.painel__resumo {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.painel__vazio {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.painel__vazio[hidden] { display: none; }
+
+.painel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.topico__decks {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .catalogo {
   display: grid;
   gap: 12px;
@@ -452,6 +510,14 @@ main {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.resultado__obsidian {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.resultado__obsidian .dica { margin-top: 12px; }
 
 /* ---------- drop ---------- */
 
