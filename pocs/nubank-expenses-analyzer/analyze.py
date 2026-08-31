@@ -153,7 +153,7 @@ def build_report_data(transactions):
 
     top_category = categories_sorted[0] if categories_sorted else ("-", 0)
 
-    forecast = build_forecast(expenses)
+    forecast = build_forecast(expenses, months_sorted[-1] if months_sorted else None)
     highlights = build_highlights(expenses, ["uber", "preply"])
 
     return {
@@ -201,9 +201,15 @@ def build_highlights(expenses, keywords):
     return result
 
 
-def build_forecast(expenses):
+def build_forecast(expenses, latest_invoice=None):
     """Projeta parcelas restantes de compras parceladas ainda em aberto,
-    assumindo que a última parcela vista se repete com o mesmo valor até o total."""
+    assumindo que a última parcela vista se repete com o mesmo valor até o total.
+
+    A projeção começa sempre depois da fatura mais recente disponível, não depois
+    da última fatura em que a parcela apareceu: um plano que parou de ser cobrado
+    (parcela some de uma fatura para a outra) projetaria para trás, criando linhas
+    de previsão em meses cuja fatura já fechou e já se sabe que não tiveram a
+    cobrança. As parcelas restantes continuam devidas — só deslizam para frente."""
     plans = {}
     for t in expenses:
         match = INSTALLMENT_RE.match(t["title"])
@@ -228,7 +234,8 @@ def build_forecast(expenses):
         remaining = plan["total"] - plan["current"]
         if remaining <= 0:
             continue
-        future_months = [add_months(plan["month"], offset) for offset in range(1, remaining + 1)]
+        anchor = max(plan["month"], latest_invoice) if latest_invoice else plan["month"]
+        future_months = [add_months(anchor, offset) for offset in range(1, remaining + 1)]
         for fm in future_months:
             forecast_by_month[fm] += plan["amount"]
         open_plans.append({
