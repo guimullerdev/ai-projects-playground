@@ -110,6 +110,25 @@ dos transcripts em `~/.claude/projects/`:
 - **custo estimado**, com tabela de preço versionada em
   [`src/usage/pricing.js`](./src/usage/pricing.js).
 
+O botão **"Exportar…"** salva o relatório **que está na tela** — não uma
+varredura nova, então o arquivo bate com os números que você estava olhando. A
+extensão escolhida no diálogo decide o formato:
+
+- **`.csv`** — formato longo, separador `;` (o que o Excel em pt-BR espera, mesma
+  escolha do export do `pocs/financing-simulator`): uma linha por bucket, colunas
+  `secao;chave;tokens;custo_usd;tokens_sem_preco`, onde `secao` é `dia`,
+  `projeto`, `modelo`, `entrypoint` ou `composicao`. Números crus, com ponto
+  decimal, pra planilha poder somar a coluna. Os totais **não** vêm no arquivo:
+  são a soma das linhas de `dia`, e repeti-los convidaria a contar tudo duas
+  vezes numa tabela dinâmica.
+- **`.json`** — o relatório inteiro como o app usa, inclusive o que não cabe no
+  CSV: totais, nº de sessões e de respostas, versão da tabela de preço e a
+  estatística da varredura.
+
+A serialização mora em [`src/usage/exporter.js`](./src/usage/exporter.js) e não
+importa nada de Electron, então dá pra conferir a saída com `node` sem subir o
+app.
+
 Duas coisas que o indexador ([`src/usage/indexer.js`](./src/usage/indexer.js))
 resolve e que qualquer varredura ingênua erra:
 

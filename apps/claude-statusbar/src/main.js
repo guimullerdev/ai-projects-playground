@@ -2,11 +2,12 @@
 
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Notification, ipcMain } = require('electron');
+const { app, BrowserWindow, Notification, ipcMain, dialog } = require('electron');
 const { menubar } = require('menubar');
 const { readLatest, freshnessLabel, countdownLabel, watchLatest, STATUSBAR_DIR } = require('./bridge');
 const { analyze } = require('./burnRate');
 const { loadReport } = require('./usage/indexer');
+const { serializeFor, defaultFileName } = require('./usage/exporter');
 
 const NOTIFY_THRESHOLDS = [90, 70]; // checked high-to-low, one notification per window
 // Below this the window is too young for a slope to extrapolate honestly — a
@@ -63,6 +64,7 @@ mb.on('show', () => refreshUsage());
 ipcMain.on('statusbar:open-report', openReport);
 ipcMain.handle('statusbar:report', () => lastReport ?? refreshUsage());
 ipcMain.handle('statusbar:refresh-report', () => refreshUsage());
+ipcMain.handle('statusbar:export-report', () => exportReport());
 
 function refreshUsage() {
   try {
@@ -77,6 +79,38 @@ function refreshUsage() {
     reportWindow.webContents.send('statusbar:report-update', lastReport);
   }
   return lastReport;
+}
+
+// Exports the report that's on screen — not a fresh scan. The file has to match
+// the numbers the user was looking at when they clicked.
+async function exportReport() {
+  const report = lastReport ?? refreshUsage();
+  if (!report) return { ok: false, error: 'sem relatório para exportar' };
+
+  const options = {
+    title: 'Exportar relatório de uso',
+    defaultPath: path.join(app.getPath('downloads'), defaultFileName(report, 'csv')),
+    filters: [
+      { name: 'CSV (planilha)', extensions: ['csv'] },
+      { name: 'JSON (relatório completo)', extensions: ['json'] },
+    ],
+  };
+  // With the report window alive the dialog becomes its sheet, instead of a
+  // loose window from an app that has no dock icon.
+  const { canceled, filePath } = reportWindow && !reportWindow.isDestroyed()
+    ? await dialog.showSaveDialog(reportWindow, options)
+    : await dialog.showSaveDialog(options);
+  if (canceled || !filePath) return { canceled: true };
+
+  try {
+    const out = serializeFor(filePath, report);
+    fs.writeFileSync(out.filePath, out.content, 'utf8');
+    return { ok: true, filePath: out.filePath, format: out.format };
+  } catch (err) {
+    // Back to the renderer instead of an error dialog: the button that fired it
+    // is where the user is looking.
+    return { ok: false, error: err.message };
+  }
 }
 
 function openReport() {

@@ -33,6 +33,12 @@ body {
   color: var(--muted);
 }
 
+.report__actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
 .button {
   flex: none;
   padding: 5px 11px;

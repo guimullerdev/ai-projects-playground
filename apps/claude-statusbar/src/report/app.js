@@ -13,6 +13,7 @@
 const els = {
   subtitle: document.getElementById('subtitle'),
   refresh: document.getElementById('refresh'),
+  exportBtn: document.getElementById('export'),
   totalTokens: document.getElementById('total-tokens'),
   totalExact: document.getElementById('total-exact'),
   totalCost: document.getElementById('total-cost'),
@@ -46,6 +47,9 @@ const MIX_SERIES = [
   { key: 'input', name: 'input', color: 'var(--series-4)' },
 ];
 
+const EXPORT_LABEL = 'Exportar…';
+const FLASH_MS = { ok: 4000, error: 8000 };
+
 const integer = new Intl.NumberFormat('pt-BR');
 const oneDecimal = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 const usd = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD' });
@@ -60,6 +64,22 @@ els.refresh.addEventListener('click', async () => {
   } finally {
     els.refresh.disabled = false;
     els.refresh.textContent = 'Atualizar';
+  }
+});
+
+els.exportBtn.addEventListener('click', async () => {
+  els.exportBtn.disabled = true;
+  try {
+    const result = await window.claudeStatusbar.exportReport();
+    if (result && result.ok) {
+      flashExport('Exportado ✓', result.filePath, 'ok');
+    } else if (result && result.error) {
+      console.error('export failed:', result.error);
+      flashExport('Falhou ✕', result.error, 'error');
+    }
+    // Cancelling in the dialog deserves no message — the user knows they did it.
+  } finally {
+    els.exportBtn.disabled = false;
   }
 });
 
@@ -79,6 +99,21 @@ function render(report) {
   const at = new Date(report.generatedAt);
   const time = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
   els.subtitle.textContent = `últimos ${report.days} dias · atualizado às ${time}`;
+}
+
+let exportFlash = null;
+
+// The outcome shows up on the button itself, with the saved path (or the error
+// message) in `title` — instead of a confirmation dialog to dismiss after an
+// action that already finished.
+function flashExport(label, title, kind) {
+  clearTimeout(exportFlash);
+  els.exportBtn.textContent = label;
+  els.exportBtn.title = title;
+  exportFlash = setTimeout(() => {
+    els.exportBtn.textContent = EXPORT_LABEL;
+    els.exportBtn.removeAttribute('title');
+  }, FLASH_MS[kind]);
 }
 
 function renderTiles(report) {
