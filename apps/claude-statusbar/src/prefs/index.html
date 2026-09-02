@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Claude Statusbar — Preferências</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="prefs">
+    <section class="field">
+      <label class="field__label" for="tray-title">Título na barra</label>
+      <select id="tray-title" class="input">
+        <option value="percent">Percentual usado (◐ 42%)</option>
+        <option value="reset">Tempo até o reset (◐ 1h12)</option>
+      </select>
+      <p class="field__note">O ícone continua o mesmo; muda só o texto ao lado.</p>
+    </section>
+
+    <section class="field">
+      <span class="field__label">Avisos de limiar</span>
+      <label class="check">
+        <input id="notify-enabled" type="checkbox" />
+        <span>Notificar ao cruzar a janela de 5h</span>
+      </label>
+      <div class="field__row">
+        <label class="field__inline" for="threshold-warn">
+          <span>Atenção</span>
+          <input id="threshold-warn" class="input input--number" type="number" min="1" max="100" step="1" />
+          <span class="field__unit">%</span>
+        </label>
+        <label class="field__inline" for="threshold-danger">
+          <span>Crítico</span>
+          <input id="threshold-danger" class="input input--number" type="number" min="1" max="100" step="1" />
+          <span class="field__unit">%</span>
+        </label>
+      </div>
+      <p class="field__note">Cada limiar avisa uma vez por janela — o reset zera a conta.</p>
+    </section>
+
+    <section class="field">
+      <span class="field__label">Aviso de ritmo</span>
+      <label class="check">
+        <input id="burn-notify" type="checkbox" />
+        <span>Avisar quando o ritmo estourar a janela antes do reset</span>
+      </label>
+      <p class="field__note">
+        É o aviso que chega enquanto ainda dá pra agir — trocar de modelo, baixar o
+        effort, parar.
+      </p>
+    </section>
+
+    <section class="field">
+      <label class="field__label" for="report-days">Janela do relatório</label>
+      <select id="report-days" class="input">
+        <option value="7">7 dias</option>
+        <option value="14">14 dias</option>
+        <option value="30">30 dias</option>
+        <option value="60">60 dias</option>
+        <option value="90">90 dias</option>
+      </select>
+      <p class="field__note">Vale para o gráfico por dia e para todas as quebras do relatório.</p>
+    </section>
+
+    <footer class="prefs__footer">
+      <span id="status" class="prefs__status"></span>
+      <button id="reset" class="button" type="button">Restaurar padrões</button>
+    </footer>
+
+    <p id="config-path" class="prefs__path"></p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

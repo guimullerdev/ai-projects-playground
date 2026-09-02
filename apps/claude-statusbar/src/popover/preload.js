@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('claudeStatusbar', {
     ipcRenderer.on('statusbar:update', (_event, payload) => callback(payload));
   },
   openReport: () => ipcRenderer.send('statusbar:open-report'),
+  openPrefs: () => ipcRenderer.send('statusbar:open-prefs'),
 });

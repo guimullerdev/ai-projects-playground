@@ -14,6 +14,7 @@ const els = {
   subtitle: document.getElementById('subtitle'),
   refresh: document.getElementById('refresh'),
   exportBtn: document.getElementById('export'),
+  totalLabel: document.getElementById('total-label'),
   totalTokens: document.getElementById('total-tokens'),
   totalExact: document.getElementById('total-exact'),
   totalCost: document.getElementById('total-cost'),
@@ -118,6 +119,9 @@ function flashExport(label, title, kind) {
 
 function renderTiles(report) {
   const { totals, byDay } = report;
+  // The window is a preference now, so every "30 dias" on screen has to come
+  // from the report instead of the markup.
+  els.totalLabel.textContent = `Tokens nos últimos ${report.days} dias`;
   els.totalTokens.textContent = compact(totals.tokens);
   els.totalExact.textContent = `${integer.format(totals.tokens)} tokens`;
   els.totalCost.textContent = totals.tokens > 0 ? `~${usd.format(totals.cost)}` : '—';
@@ -132,7 +136,7 @@ function renderTiles(report) {
   const busiest = byDay.reduce((top, day) => (day.tokens > (top?.tokens ?? 0) ? day : top), null);
   els.busiestDay.textContent = busiest && busiest.tokens > 0
     ? `em ${activeDays} dias ativos · pico ${dayLabel(busiest.day)}`
-    : 'sem dado nos últimos 30 dias';
+    : `sem dado nos últimos ${byDay.length} dias`;
 }
 
 function renderDaily(byDay) {
@@ -140,7 +144,7 @@ function renderDaily(byDay) {
   svg.replaceChildren();
   const max = Math.max(0, ...byDay.map((day) => day.tokens));
   if (max <= 0) {
-    showEmpty(svg.parentElement, svg, 'Nenhum token registrado nos últimos 30 dias.');
+    showEmpty(svg.parentElement, svg, `Nenhum token registrado nos últimos ${byDay.length} dias.`);
     return;
   }
   clearEmpty(svg.parentElement, svg);
@@ -165,6 +169,7 @@ function renderDaily(byDay) {
   const band = plotW / byDay.length;
   const barW = Math.min(24, band - 2); // never fill the band — the leftover is the 2px gap plus air
   const busiestIndex = byDay.reduce((best, day, i) => (day.tokens > byDay[best].tokens ? i : best), 0);
+  const labelStep = Math.max(1, Math.ceil(byDay.length / 8));
 
   byDay.forEach((day, i) => {
     const x = padding.left + i * band + (band - barW) / 2;
@@ -184,7 +189,9 @@ function renderDaily(byDay) {
       }
     }
 
-    if (i % 5 === 0 || i === byDay.length - 1) {
+    // ~8 labels whatever the window is: fixed every-5th would crowd 90 days
+    // into an unreadable row and leave 7 days with two ticks.
+    if (i % labelStep === 0 || i === byDay.length - 1) {
       svg.appendChild(text(x + barW / 2, height - 6, dayLabel(day.day), {
         class: 'axis-label', 'text-anchor': 'middle',
       }));

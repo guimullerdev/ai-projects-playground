@@ -1,0 +1,120 @@
+@import url('../shared/theme.css');
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.prefs {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.field__label {
+  font-weight: 600;
+}
+
+.field__note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.field__row {
+  display: flex;
+  gap: 16px;
+}
+
+.field__inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field__unit {
+  color: var(--muted);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Um campo desligado continua legível — some o controle, não a informação de
+   qual valor está guardado ali. */
+.check input,
+.input {
+  accent-color: var(--accent);
+}
+
+.input {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-inset);
+  color: var(--ink);
+  font: inherit;
+}
+
+.input--number {
+  width: 62px;
+}
+
+.input:disabled {
+  opacity: 0.5;
+}
+
+.button {
+  flex: none;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.prefs__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prefs__status {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.prefs__status.is-error {
+  color: var(--down);
+}
+
+.prefs__path {
+  margin: 0;
+  font-size: 10px;
+  color: var(--muted);
+  word-break: break-all;
+}

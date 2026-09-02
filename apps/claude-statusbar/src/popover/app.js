@@ -11,10 +11,12 @@ const els = {
   fiveHourBurn: document.getElementById('five-hour-burn'),
   today: document.getElementById('today'),
   openReport: document.getElementById('open-report'),
+  openPrefs: document.getElementById('open-prefs'),
 };
 
 window.claudeStatusbar.onUpdate((payload) => render(payload));
 els.openReport.addEventListener('click', () => window.claudeStatusbar.openReport());
+els.openPrefs.addEventListener('click', () => window.claudeStatusbar.openPrefs());
 
 function render(payload) {
   els.freshness.textContent = payload.freshnessLabel;

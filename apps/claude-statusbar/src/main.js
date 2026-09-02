@@ -8,13 +8,16 @@ const { readLatest, freshnessLabel, countdownLabel, watchLatest, STATUSBAR_DIR }
 const { analyze } = require('./burnRate');
 const { loadReport } = require('./usage/indexer');
 const { serializeFor, defaultFileName } = require('./usage/exporter');
+const configStore = require('./config');
 
-const NOTIFY_THRESHOLDS = [90, 70]; // checked high-to-low, one notification per window
 // Below this the window is too young for a slope to extrapolate honestly — a
 // burst at 4% projects an ETA that the next quiet minute invalidates.
 const BURN_NOTIFY_FLOOR = 25;
 const NOTIFIED_PATH = path.join(STATUSBAR_DIR, 'notified.json');
-const REPORT_DAYS = 30;
+
+// Thresholds, tray title, report window and the pace warning come from here now
+// (~/.claude/statusbar/config.json), edited in the preferences window.
+let config = configStore.load();
 
 const mb = menubar({
   index: `file://${path.join(__dirname, 'popover', 'index.html')}`,
@@ -37,6 +40,7 @@ let lastResult = null;
 let lastBurn = null;
 let lastReport = null;
 let reportWindow = null;
+let prefsWindow = null;
 
 mb.on('ready', () => {
   render(readLatest());
@@ -62,13 +66,20 @@ mb.on('after-create-window', () => {
 mb.on('show', () => refreshUsage());
 
 ipcMain.on('statusbar:open-report', openReport);
+ipcMain.on('statusbar:open-prefs', openPrefs);
+ipcMain.handle('statusbar:prefs', () => ({
+  config,
+  defaults: configStore.DEFAULTS,
+  configPath: configStore.CONFIG_PATH,
+}));
+ipcMain.handle('statusbar:save-prefs', (_event, patch) => savePrefs(patch));
 ipcMain.handle('statusbar:report', () => lastReport ?? refreshUsage());
 ipcMain.handle('statusbar:refresh-report', () => refreshUsage());
 ipcMain.handle('statusbar:export-report', () => exportReport());
 
 function refreshUsage() {
   try {
-    lastReport = loadReport({ days: REPORT_DAYS });
+    lastReport = loadReport({ days: config.reportDays });
   } catch (err) {
     // The index is a nice-to-have next to the rate-limit bridge: if the
     // transcripts can't be read, the app keeps showing the percentage.
@@ -79,6 +90,55 @@ function refreshUsage() {
     reportWindow.webContents.send('statusbar:report-update', lastReport);
   }
   return lastReport;
+}
+
+// Every preference applies to the running app right away: the tray redraws with
+// the new title mode, the next render notifies by the new thresholds, and a
+// changed report window re-indexes. Nothing here needs a restart.
+function savePrefs(patch) {
+  const previousDays = config.reportDays;
+  try {
+    config = configStore.save(patch);
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+  render(lastResult ?? readLatest());
+  if (config.reportDays !== previousDays) refreshUsage();
+  return { ok: true, config };
+}
+
+function openPrefs() {
+  if (prefsWindow && !prefsWindow.isDestroyed()) {
+    app.focus({ steal: true });
+    prefsWindow.show();
+    prefsWindow.focus();
+    return;
+  }
+
+  prefsWindow = new BrowserWindow({
+    width: 420,
+    height: 620,
+    // Content size, not window size: the form is a fixed height and the title
+    // bar would otherwise eat the config path line at the bottom.
+    useContentSize: true,
+    resizable: false,
+    title: 'Claude Statusbar — Preferências',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'prefs', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  prefsWindow.loadFile(path.join(__dirname, 'prefs', 'index.html'));
+  prefsWindow.once('ready-to-show', () => {
+    app.focus({ steal: true });
+    prefsWindow.show();
+  });
+  prefsWindow.on('closed', () => {
+    prefsWindow = null;
+  });
 }
 
 // Exports the report that's on screen — not a fresh scan. The file has to match
@@ -184,8 +244,14 @@ function serialize(result) {
 }
 
 function trayTitle(result) {
-  const pct = result.fiveHour.pct;
-  if (pct === null || result.freshness === 'dead') return '◐ --%';
+  const { pct, resetsAt } = result.fiveHour;
+  if (pct === null || result.freshness === 'dead') return '◐ --';
+  if (config.trayTitle === 'reset') {
+    // The countdown label is written for the popover ("reseta em 1h12"); the
+    // tray has room for the number alone.
+    const countdown = countdownLabel(resetsAt);
+    return countdown ? `◐ ${countdown.replace('reseta em ', '')}` : `◐ ${Math.round(pct)}%`;
+  }
   return `◐ ${Math.round(pct)}%`;
 }
 
@@ -231,7 +297,9 @@ function maybeNotify(result, burn) {
     ? { burnNotified: false, thresholds: [], ...stored }
     : { windowKey, thresholds: [], burnNotified: false };
 
-  for (const threshold of NOTIFY_THRESHOLDS) {
+  // Stored ascending, fired high-to-low: one notification per window, and the
+  // one that gets shown is the worst threshold just crossed.
+  for (const threshold of [...config.thresholds].sort((a, b) => b - a)) {
     if (pct >= threshold && !state.thresholds.includes(threshold)) {
       new Notification({
         title: 'Claude — limite de 5h',
@@ -245,7 +313,7 @@ function maybeNotify(result, burn) {
   // The pace warning is the one that arrives while there's still time to act on
   // it: at 12%/h you're told at 40% that 100% lands before the reset, instead of
   // finding out at 90% when the decision is already made for you.
-  if (!state.burnNotified && pct >= BURN_NOTIFY_FLOOR && burn && burn.hitsBeforeReset) {
+  if (config.burnNotify && !state.burnNotified && pct >= BURN_NOTIFY_FLOOR && burn && burn.hitsBeforeReset) {
     new Notification({
       title: 'Claude — ritmo de consumo',
       body: `${burn.label}, antes do reset (${countdownLabel(resetsAt)}). Trocar de modelo ou baixar o effort agora dá pra chegar até lá.`,

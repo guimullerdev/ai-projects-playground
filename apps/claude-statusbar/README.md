@@ -54,20 +54,21 @@ hoje.
 
 ## O que o app mostra
 
-- **Ícone da barra**: `◐ 42%` — percentual da janela de 5h atual. `◐ --%`
-  quando não há dado (ainda não instalou a ponte, ou faz tempo que nenhuma
-  sessão roda).
+- **Ícone da barra**: `◐ 42%` — percentual da janela de 5h atual, ou `◐ 1h12`
+  (tempo até o reset) se você trocar nas preferências. `◐ --` quando não há
+  dado (ainda não instalou a ponte, ou faz tempo que nenhuma sessão roda).
 - **Popover**: barras de 5h e 7 dias, com percentual, countdown até o reset
   (`reseta em 1h12`) e um selo de frescor (`atualizado agora` / `há 8 min` /
   `há 2h — sem sessão aberta`). Uma linha de rodapé com tokens de hoje, número
   de sessões e o modelo predominante, e um link pro relatório.
 - **Ritmo de consumo**, logo abaixo do countdown de 5h: `ritmo 25%/h · estoura
   às 13:34` — ver abaixo.
-- **Notificação nativa** quando a janela de 5h cruza 70% e depois 90%, e
-  quando o ritmo passa a projetar o estouro antes do reset. Cada um desses
-  avisos dispara uma vez por janela.
+- **Notificação nativa** quando a janela de 5h cruza os limiares (70% e 90%
+  por padrão), e quando o ritmo passa a projetar o estouro antes do reset. Cada
+  um desses avisos dispara uma vez por janela, e os dois podem ser desligados
+  nas preferências.
 - **Relatório** (botão "Relatório ›" no popover): janela separada com o
-  histórico dos últimos 30 dias — ver abaixo.
+  histórico dos últimos 30 dias (ou a janela que você escolher) — ver abaixo.
 
 ## Ritmo de consumo
 
@@ -143,6 +144,27 @@ resolve e que qualquer varredura ingênua erra:
 O custo em dólar é **estimativa** e está rotulado como tal na interface: a
 assinatura não cobra por token. O que ele serve é comparar projetos, modelos e
 dias entre si.
+
+## Preferências
+
+O botão "Preferências" no popover abre uma janela com o que antes era constante
+no código:
+
+- **título na barra** — percentual usado (`◐ 42%`) ou tempo até o reset (`◐ 1h12`);
+- **limiares de aviso** da janela de 5h (70% e 90% por padrão) — ou nenhum, se
+  desmarcar o aviso;
+- **aviso de ritmo** — ligar/desligar o que projeta o estouro antes do reset;
+- **janela do relatório** — de 7 a 90 dias, valendo pro gráfico por dia e pra
+  todas as quebras.
+
+Cada campo salva ao mudar, sem botão "Salvar", e **aplica na hora**: o título do
+tray redesenha, o próximo render já usa os limiares novos, e mudar a janela
+reindexa o relatório. Nada disso pede reinício.
+
+As preferências ficam em `~/.claude/statusbar/config.json`, junto do
+`latest.json` e do `notified.json` — é JSON legível, dá pra editar na mão, e um
+arquivo inválido ou truncado volta pros padrões campo a campo em vez de derrubar
+o app ([`src/config.js`](./src/config.js)).
 
 ## Limitações conhecidas
 
