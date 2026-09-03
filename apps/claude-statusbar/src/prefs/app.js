@@ -11,6 +11,8 @@ const els = {
   thresholdDanger: document.getElementById('threshold-danger'),
   burnNotify: document.getElementById('burn-notify'),
   reportDays: document.getElementById('report-days'),
+  openAtLogin: document.getElementById('open-at-login'),
+  loginNote: document.getElementById('login-note'),
   reset: document.getElementById('reset'),
   status: document.getElementById('status'),
   configPath: document.getElementById('config-path'),
@@ -24,12 +26,13 @@ let statusFlash = null;
 init();
 
 async function init() {
-  const { config, defaults: fallback, configPath } = await window.claudeStatusbar.getPrefs();
+  const { config, defaults: fallback, configPath, packaged } = await window.claudeStatusbar.getPrefs();
   defaults = fallback;
   els.configPath.textContent = configPath;
+  els.loginNote.hidden = packaged;
   fill(config);
 
-  for (const el of [els.trayTitle, els.notifyEnabled, els.thresholdWarn, els.thresholdDanger, els.burnNotify, els.reportDays]) {
+  for (const el of [els.trayTitle, els.notifyEnabled, els.thresholdWarn, els.thresholdDanger, els.burnNotify, els.reportDays, els.openAtLogin]) {
     // 'change', not 'input': a number field mid-typing ("7" on the way to "75")
     // is not a preference, and saving it would notify at the wrong percentage.
     el.addEventListener('change', apply);
@@ -45,6 +48,7 @@ function fill(config) {
   els.trayTitle.value = config.trayTitle;
   els.burnNotify.checked = config.burnNotify;
   els.reportDays.value = String(config.reportDays);
+  els.openAtLogin.checked = config.openAtLogin;
 
   // The two inputs are the stored thresholds in ascending order; an empty list
   // means "don't notify", so the defaults stay visible in the disabled fields
@@ -71,6 +75,7 @@ async function apply() {
       : [],
     burnNotify: els.burnNotify.checked,
     reportDays: Number(els.reportDays.value),
+    openAtLogin: els.openAtLogin.checked,
   };
 
   const result = await window.claudeStatusbar.savePrefs(patch);

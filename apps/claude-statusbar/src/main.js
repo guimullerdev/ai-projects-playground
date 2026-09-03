@@ -43,6 +43,7 @@ let reportWindow = null;
 let prefsWindow = null;
 
 mb.on('ready', () => {
+  applyLoginItem();
   render(readLatest());
   refreshUsage();
   watchLatest(render);
@@ -71,6 +72,9 @@ ipcMain.handle('statusbar:prefs', () => ({
   config,
   defaults: configStore.DEFAULTS,
   configPath: configStore.CONFIG_PATH,
+  // In dev (`npm start`) the login item registers the Electron binary, not a
+  // real .app — the preferences window says so instead of promising otherwise.
+  packaged: app.isPackaged,
 }));
 ipcMain.handle('statusbar:save-prefs', (_event, patch) => savePrefs(patch));
 ipcMain.handle('statusbar:report', () => lastReport ?? refreshUsage());
@@ -96,15 +100,38 @@ function refreshUsage() {
 // the new title mode, the next render notifies by the new thresholds, and a
 // changed report window re-indexes. Nothing here needs a restart.
 function savePrefs(patch) {
-  const previousDays = config.reportDays;
+  const previous = config;
   try {
     config = configStore.save(patch);
   } catch (err) {
     return { ok: false, error: err.message };
   }
   render(lastResult ?? readLatest());
-  if (config.reportDays !== previousDays) refreshUsage();
+  if (config.reportDays !== previous.reportDays) refreshUsage();
+  if (config.openAtLogin !== previous.openAtLogin) {
+    app.setLoginItemSettings({ openAtLogin: config.openAtLogin });
+  }
   return { ok: true, config };
+}
+
+// Re-registers the login item on startup when the preference is on, so the
+// entry survives a move or a reinstall of the app.
+//
+// Deliberately one-way, and only in the "on" direction. Reading the current
+// state back is not an option: `getLoginItemSettings().openAtLogin` reports
+// true on a dev run where nothing was ever registered, so trusting it would
+// flip the preference on by itself. And applying the "off" case on startup
+// would mean deleting a login item on every launch of an app whose default is
+// off — work with nothing to gain. Turning the checkbox off unregisters it
+// right there in savePrefs, which is where the user actually asked for it.
+function applyLoginItem() {
+  if (!config.openAtLogin) return;
+  try {
+    app.setLoginItemSettings({ openAtLogin: true });
+  } catch (err) {
+    // A login item that can't be registered is not a reason to fail to start.
+    console.error('login item failed:', err.message);
+  }
 }
 
 function openPrefs() {
@@ -117,7 +144,9 @@ function openPrefs() {
 
   prefsWindow = new BrowserWindow({
     width: 420,
-    height: 620,
+    // Measured against the form at its tallest (dev build, where the login item
+    // carries an extra note); the packaged app leaves ~40px of air at the bottom.
+    height: 770,
     // Content size, not window size: the form is a fixed height and the title
     // bar would otherwise eat the config path line at the bottom.
     useContentSize: true,

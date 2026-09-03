@@ -155,11 +155,20 @@ no código:
   desmarcar o aviso;
 - **aviso de ritmo** — ligar/desligar o que projeta o estouro antes do reset;
 - **janela do relatório** — de 7 a 90 dias, valendo pro gráfico por dia e pra
-  todas as quebras.
+  todas as quebras;
+- **abrir no login** — registra o app nos Itens de Início do macOS.
 
 Cada campo salva ao mudar, sem botão "Salvar", e **aplica na hora**: o título do
 tray redesenha, o próximo render já usa os limiares novos, e mudar a janela
 reindexa o relatório. Nada disso pede reinício.
+
+O "abrir no login" é **de mão única** por um motivo medido: numa execução de
+dev, onde nada foi registrado, `app.getLoginItemSettings().openAtLogin` volta
+`true` — ler o estado do sistema pra sincronizar ligaria a preferência sozinha.
+Então o app só **registra** (a cada abertura, pra entrada sobreviver a um
+reinstall) e só **desregistra** quando você desmarca a caixa. Se remover a
+entrada em Ajustes do Sistema, desmarque aqui também. Em dev (`npm start`) quem
+é registrado é o binário do Electron, e a janela avisa isso.
 
 As preferências ficam em `~/.claude/statusbar/config.json`, junto do
 `latest.json` e do `notified.json` — é JSON legível, dá pra editar na mão, e um

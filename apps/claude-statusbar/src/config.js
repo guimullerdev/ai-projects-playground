@@ -26,6 +26,7 @@ const DEFAULTS = {
   thresholds: [70, 90], // ascending; main.js fires the highest crossed one
   burnNotify: true,
   reportDays: 30,
+  openAtLogin: false,
 };
 
 /**
@@ -79,6 +80,9 @@ function normalize(raw) {
     thresholds: thresholds(source.thresholds),
     burnNotify: typeof source.burnNotify === 'boolean' ? source.burnNotify : DEFAULTS.burnNotify,
     reportDays: integer(source.reportDays, 1, 365, DEFAULTS.reportDays),
+    // Intent only — the OS holds the real login item, and main.js reconciles the
+    // two at startup with the OS winning.
+    openAtLogin: typeof source.openAtLogin === 'boolean' ? source.openAtLogin : DEFAULTS.openAtLogin,
   };
 }
 

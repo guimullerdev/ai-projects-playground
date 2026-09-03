@@ -62,6 +62,22 @@
       <p class="field__note">Vale para o gráfico por dia e para todas as quebras do relatório.</p>
     </section>
 
+    <section class="field">
+      <span class="field__label">Inicialização</span>
+      <label class="check">
+        <input id="open-at-login" type="checkbox" />
+        <span>Abrir o app quando eu fizer login</span>
+      </label>
+      <p id="login-note" class="field__note" hidden>
+        Em dev (<code>npm start</code>) isso registra o binário do Electron — serve
+        pra testar, não como instalação.
+      </p>
+      <p class="field__note">
+        Ligado aqui, o app se registra de novo a cada abertura — se você remover a
+        entrada em Ajustes do Sistema › Itens de Início, desmarque aqui também.
+      </p>
+    </section>
+
     <footer class="prefs__footer">
       <span id="status" class="prefs__status"></span>
       <button id="reset" class="button" type="button">Restaurar padrões</button>
