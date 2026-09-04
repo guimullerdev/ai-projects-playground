@@ -14,9 +14,12 @@ const els = {
   openPrefs: document.getElementById('open-prefs'),
 };
 
+let todayProject = null;
+
 window.claudeStatusbar.onUpdate((payload) => render(payload));
 els.openReport.addEventListener('click', () => window.claudeStatusbar.openReport());
 els.openPrefs.addEventListener('click', () => window.claudeStatusbar.openPrefs());
+els.today.addEventListener('click', openTodayProject);
 
 function render(payload) {
   els.freshness.textContent = payload.freshnessLabel;
@@ -27,6 +30,28 @@ function render(payload) {
   renderBurn(payload.burnRate);
 
   els.today.textContent = todayLine(payload.today);
+  setTodayProject(payload.today);
+}
+
+// The day's biggest project is a click away, on the line that already talks
+// about today — the popover has no room for a row of its own.
+function setTodayProject(today) {
+  todayProject = today && today.ok && today.topProject && today.topProject.path
+    ? today.topProject
+    : null;
+  els.today.disabled = !todayProject;
+  els.today.title = todayProject ? `abrir ${todayProject.path}` : '';
+}
+
+async function openTodayProject() {
+  if (!todayProject) return;
+  const label = els.today.textContent;
+  const result = await window.claudeStatusbar.openProject(todayProject.path);
+  if (result && result.ok) return;
+  els.today.textContent = (result && result.error) || 'não abriu';
+  setTimeout(() => {
+    els.today.textContent = label;
+  }, 4000);
 }
 
 function renderWindow(win, pctEl, barEl, resetEl) {

@@ -102,6 +102,18 @@ function render(report) {
   els.subtitle.textContent = `últimos ${report.days} dias · atualizado às ${time}`;
 }
 
+// The failure shows up in the row that was clicked: a folder that moved is
+// about that project, and a dialog would be a lot of ceremony for it.
+async function openProject(button, dir) {
+  const label = button.textContent;
+  const result = await window.claudeStatusbar.openProject(dir);
+  if (result && result.ok) return;
+  button.textContent = `${label} — ${(result && result.error) || 'não abriu'}`;
+  setTimeout(() => {
+    button.textContent = label;
+  }, FLASH_MS.error);
+}
+
 let exportFlash = null;
 
 // The outcome shows up on the button itself, with the saved path (or the error
@@ -320,9 +332,17 @@ function renderRanks(container, rows, total) {
 
     const head = document.createElement('div');
     head.className = 'rank__head';
-    const name = document.createElement('span');
+    // Only the project ranking carries a path — model and entrypoint rows stay
+    // plain text, and so does the synthetic "outros (N)" row.
+    const name = document.createElement(row.path ? 'button' : 'span');
     name.className = 'rank__name';
     name.textContent = row.name;
+    if (row.path) {
+      name.type = 'button';
+      name.classList.add('rank__name--open');
+      name.title = `abrir ${row.path}`;
+      name.addEventListener('click', () => openProject(name, row.path));
+    }
     const value = document.createElement('span');
     value.className = 'rank__value';
     value.textContent = `${compact(row.tokens)} · ${Math.round(share)}%`;

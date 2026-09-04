@@ -60,7 +60,9 @@ hoje.
 - **Popover**: barras de 5h e 7 dias, com percentual, countdown até o reset
   (`reseta em 1h12`) e um selo de frescor (`atualizado agora` / `há 8 min` /
   `há 2h — sem sessão aberta`). Uma linha de rodapé com tokens de hoje, número
-  de sessões e o modelo predominante, e um link pro relatório.
+  de sessões e o modelo predominante, e links pras preferências e pro relatório.
+  **Clicar na linha de hoje abre a pasta do projeto que mais consumiu no dia** —
+  o tooltip diz qual é, e a linha fica inerte nos dias sem consumo.
 - **Ritmo de consumo**, logo abaixo do countdown de 5h: `ritmo 25%/h · estoura
   às 13:34` — ver abaixo.
 - **Notificação nativa** quando a janela de 5h cruza os limiares (70% e 90%
@@ -107,7 +109,9 @@ dos transcripts em `~/.claude/projects/`:
 - **composição dos tokens** — input, output, cache creation e cache read. É a
   parte que costuma surpreender: sessão longa é quase toda releitura de cache,
   e isso aparece na hora;
-- **quebra por projeto, por modelo e por entrypoint** (app desktop vs CLI);
+- **quebra por projeto, por modelo e por entrypoint** (app desktop vs CLI) —
+  **clicar num projeto abre a pasta dele**; se ela tiver sido movida ou apagada,
+  a própria linha diz isso;
 - **custo estimado**, com tabela de preço versionada em
   [`src/usage/pricing.js`](./src/usage/pricing.js).
 

@@ -240,6 +240,22 @@ body {
   white-space: nowrap;
 }
 
+/* Linha de projeto: vira botão, mas continua lendo como o rótulo da barra. */
+.rank__name--open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rank__name--open:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .rank__value {
   flex: none;
   color: var(--muted);

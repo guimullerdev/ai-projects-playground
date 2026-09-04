@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('claudeStatusbar', {
   },
   openReport: () => ipcRenderer.send('statusbar:open-report'),
   openPrefs: () => ipcRenderer.send('statusbar:open-prefs'),
+  openProject: (dir) => ipcRenderer.invoke('statusbar:open-project', dir),
 });

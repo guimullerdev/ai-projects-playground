@@ -104,9 +104,36 @@ body {
   padding-top: 10px;
 }
 
+/* É um botão só quando existe projeto pra abrir; no resto do tempo tem que ler
+   como a linha de texto que sempre foi. */
 .popover__today {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+/* `disabled` aqui significa "não tem projeto de hoje", não "indisponível" —
+   por isso nada de opacidade. */
+.popover__today:disabled {
+  opacity: 1;
+}
+
+.popover__today:enabled {
+  cursor: pointer;
+}
+
+.popover__today:enabled:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .popover__link {

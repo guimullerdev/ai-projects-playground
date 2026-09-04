@@ -2,7 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Notification, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Notification, ipcMain, dialog, shell } = require('electron');
 const { menubar } = require('menubar');
 const { readLatest, freshnessLabel, countdownLabel, watchLatest, STATUSBAR_DIR } = require('./bridge');
 const { analyze } = require('./burnRate');
@@ -77,6 +77,7 @@ ipcMain.handle('statusbar:prefs', () => ({
   packaged: app.isPackaged,
 }));
 ipcMain.handle('statusbar:save-prefs', (_event, patch) => savePrefs(patch));
+ipcMain.handle('statusbar:open-project', (_event, dir) => openProject(dir));
 ipcMain.handle('statusbar:report', () => lastReport ?? refreshUsage());
 ipcMain.handle('statusbar:refresh-report', () => refreshUsage());
 ipcMain.handle('statusbar:export-report', () => exportReport());
@@ -94,6 +95,20 @@ function refreshUsage() {
     reportWindow.webContents.send('statusbar:report-update', lastReport);
   }
   return lastReport;
+}
+
+// Opens a project folder in Finder. The path comes from the transcripts' own
+// `cwd`, walked up to the git root by the indexer — so it's a directory the user
+// already worked in, not input from anywhere else. It's still checked before
+// opening: a repo that was moved or deleted since the session should say so
+// instead of failing silently.
+async function openProject(dir) {
+  if (typeof dir !== 'string' || !path.isAbsolute(dir)) {
+    return { ok: false, error: 'caminho inválido' };
+  }
+  if (!fs.existsSync(dir)) return { ok: false, error: 'pasta não existe mais' };
+  const error = await shell.openPath(dir);
+  return error ? { ok: false, error } : { ok: true };
 }
 
 // Every preference applies to the running app right away: the tray redraws with

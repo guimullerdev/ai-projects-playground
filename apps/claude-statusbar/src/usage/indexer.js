@@ -170,6 +170,7 @@ function expand(rec) {
     at: rec.t,
     cwd: rec.p,
     project: projectName(rec.p),
+    projectPath: projectRoot(rec.p),
     model: rec.m,
     entrypoint: rec.e,
     sessionId: rec.s,
@@ -189,21 +190,24 @@ function num(value) {
 }
 
 /**
- * Turns a session's cwd into a project name. The cwd is often a subdirectory of
- * a repo (a session opened in apps/foo), so walking up to the git root keeps
- * those from showing up as separate projects.
+ * Walks a session's cwd up to the git root. The cwd is often a subdirectory of
+ * a repo (a session opened in apps/foo), so without this the same project shows
+ * up several times — and the report's "open this project" would land inside a
+ * subfolder instead of the repo.
+ *
+ * Falls back to the cwd itself when there's no repo above it.
  */
-const projectNameCache = new Map();
-function projectName(cwd) {
-  if (!cwd) return 'desconhecido';
-  if (projectNameCache.has(cwd)) return projectNameCache.get(cwd);
+const projectRootCache = new Map();
+function projectRoot(cwd) {
+  if (!cwd) return null;
+  if (projectRootCache.has(cwd)) return projectRootCache.get(cwd);
 
   let dir = cwd;
-  let name = path.basename(cwd);
+  let root = cwd;
   while (dir && dir !== path.dirname(dir)) {
     try {
       if (fs.existsSync(path.join(dir, '.git'))) {
-        name = path.basename(dir);
+        root = dir;
         break;
       }
     } catch {
@@ -212,8 +216,14 @@ function projectName(cwd) {
     dir = path.dirname(dir);
   }
 
-  projectNameCache.set(cwd, name);
-  return name;
+  projectRootCache.set(cwd, root);
+  return root;
+}
+
+/** The project name is the folder the root sits in. */
+function projectName(cwd) {
+  const root = projectRoot(cwd);
+  return root ? path.basename(root) : 'desconhecido';
 }
 
 function readFrom(file, offset) {
@@ -319,6 +329,7 @@ function buildReport(records, { days = 30, now = Date.now() } = {}) {
   const sessions = new Set();
   const todaySessions = new Set();
   const todayModelTokens = new Map();
+  const todayProjects = new Map();
   const unpricedModels = new Set();
 
   let tokens = 0;
@@ -348,7 +359,7 @@ function buildReport(records, { days = 30, now = Date.now() } = {}) {
     bucket.tokens += recTokens;
     bucket.cost += recCost || 0;
 
-    add(byProject, rec.project || 'desconhecido', recTokens, recCost);
+    add(byProject, rec.project || 'desconhecido', recTokens, recCost, rec.projectPath);
     add(byModel, rec.model || 'desconhecido', recTokens, recCost);
     add(byEntrypoint, entrypointLabel(rec.entrypoint), recTokens, recCost);
 
@@ -364,6 +375,7 @@ function buildReport(records, { days = 30, now = Date.now() } = {}) {
       todayCost += recCost || 0;
       if (rec.sessionId) todaySessions.add(rec.sessionId);
       if (rec.model) todayModelTokens.set(rec.model, (todayModelTokens.get(rec.model) || 0) + recTokens);
+      if (rec.projectPath) add(todayProjects, rec.project, recTokens, recCost, rec.projectPath);
     }
   }
 
@@ -389,6 +401,7 @@ function buildReport(records, { days = 30, now = Date.now() } = {}) {
       cost: todayCost,
       sessions: todaySessions.size,
       topModel: topKey(todayModelTokens),
+      topProject: rank(todayProjects)[0] || null,
     },
     meta: {
       pricingVersion: PRICING_VERSION,
@@ -397,11 +410,14 @@ function buildReport(records, { days = 30, now = Date.now() } = {}) {
   };
 }
 
-function add(map, key, tokens, cost) {
-  const current = map.get(key) || { name: key, tokens: 0, cost: 0, unpriced: 0 };
+function add(map, key, tokens, cost, projectPath = null) {
+  const current = map.get(key) || { name: key, tokens: 0, cost: 0, unpriced: 0, path: null };
   current.tokens += tokens;
   if (cost === null) current.unpriced += tokens;
   else current.cost += cost;
+  // First path wins: the same project name always resolves to the same root,
+  // and a record with no cwd shouldn't blank out one that has it.
+  if (!current.path && projectPath) current.path = projectPath;
   map.set(key, current);
 }
 
