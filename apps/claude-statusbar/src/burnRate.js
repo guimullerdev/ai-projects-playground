@@ -7,10 +7,15 @@ const { STATUSBAR_DIR, safeDate } = require('./bridge');
 
 const HISTORY_PATH = path.join(STATUSBAR_DIR, 'rate-limits.jsonl');
 
-// The bridge appends to rate-limits.jsonl forever (retention is still an open
-// decision in plan.md), so never read the whole file: the projection only ever
-// looks at the current 5h window, which lives in the last few KB.
+// The bridge only appends, so never read the whole file to project: the
+// projection looks at the current 5h window, which lives in the last few KB.
+// `prune()` below is what keeps the file from growing without end.
 const TAIL_BYTES = 256 * 1024;
+
+// A day of heavy use is a few hundred KB, and nothing reads past the current
+// window — 30 days is already far more history than the projection needs, kept
+// only so the file can answer "how did last month look" by hand.
+const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const RECENT_MS = 90 * 60 * 1000; // preferred lookback for "no ritmo atual"
 const MIN_SPAN_MS = 10 * 60 * 1000; // shortest span that yields a usable slope
@@ -64,6 +69,98 @@ function readSamples(filePath = HISTORY_PATH) {
 
   samples.sort((a, b) => a.at - b.at);
   return samples;
+}
+
+/**
+ * Drops samples older than the retention window from rate-limits.jsonl.
+ *
+ * The cut is "everything up to and including the last sample older than the
+ * retention window". Nothing recent can be lost that way, and torn lines — the
+ * bridge appends without locking, so a crash mid-write leaves one — go along
+ * with the old samples around them instead of blocking the cut forever. A line
+ * that can't be read is never what decides the boundary, in either direction.
+ *
+ * The file is append-ordered by time, so the scan stops at the first readable
+ * sample inside the window, and everything from the cut on is copied byte for
+ * byte — no reserialization, nothing rewritten that didn't have to be.
+ *
+ * @param {{filePath?: string, now?: number, retentionMs?: number}} [options]
+ * @returns {{status: 'pruned'|'kept'|'missing'|'failed', dropped?: number, freed?: number, error?: string}}
+ */
+function prune(options = {}) {
+  const { filePath = HISTORY_PATH, now = Date.now(), retentionMs = RETENTION_MS } = options;
+  const cutoff = now - retentionMs;
+
+  let buf;
+  try {
+    buf = fs.readFileSync(filePath);
+  } catch (err) {
+    return err.code === 'ENOENT'
+      ? { status: 'missing' }
+      : { status: 'failed', error: err.message };
+  }
+
+  let cut = 0;
+  let dropped = 0;
+  let seen = 0;
+  let scan = 0;
+  while (scan < buf.length) {
+    const nl = buf.indexOf(0x0a, scan);
+    if (nl === -1) break; // last line still being written — not ours to judge
+    seen += 1;
+    const age = ageOf(buf.toString('utf8', scan, nl), cutoff);
+    if (age === 'recent') break; // from here on it's inside the window
+    if (age === 'old') {
+      cut = nl + 1;
+      dropped = seen;
+    }
+    scan = nl + 1; // 'unreadable' — keep scanning; it doesn't decide the cut
+  }
+  const offset = cut;
+  if (offset === 0) return { status: 'kept', dropped: 0 };
+
+  try {
+    const tmp = `${filePath}.tmp`;
+    fs.writeFileSync(tmp, buf.subarray(offset));
+    // The bridge appends without locking, so a sample written between the read
+    // above and the rename below would go to the old inode and vanish. Copy
+    // whatever arrived in the meantime into the temp file first — that narrows
+    // the loss window to the rename itself.
+    const after = fs.statSync(filePath);
+    if (after.size > buf.length) {
+      const fd = fs.openSync(filePath, 'r');
+      try {
+        const delta = Buffer.alloc(after.size - buf.length);
+        fs.readSync(fd, delta, 0, delta.length, buf.length);
+        fs.appendFileSync(tmp, delta);
+      } finally {
+        fs.closeSync(fd);
+      }
+    }
+    fs.renameSync(tmp, filePath);
+  } catch (err) {
+    return { status: 'failed', error: err.message };
+  }
+
+  return { status: 'pruned', dropped, freed: offset };
+}
+
+/**
+ * Where a line falls relative to the retention window: 'old', 'recent', or
+ * 'unreadable' for a blank, torn or shape-changed line, which is carried by the
+ * samples around it rather than judged on its own.
+ */
+function ageOf(line, cutoff) {
+  if (!line.trim()) return 'unreadable';
+  let entry;
+  try {
+    entry = JSON.parse(line);
+  } catch {
+    return 'unreadable';
+  }
+  const at = safeDate(entry.at);
+  if (!at) return 'unreadable';
+  return at.getTime() < cutoff ? 'old' : 'recent';
 }
 
 /**
@@ -220,5 +317,7 @@ function humanDuration(ms) {
 module.exports = {
   analyze,
   readSamples,
+  prune,
   HISTORY_PATH,
+  RETENTION_MS,
 };

@@ -5,7 +5,7 @@ const fs = require('fs');
 const { app, BrowserWindow, Notification, ipcMain, dialog, shell } = require('electron');
 const { menubar } = require('menubar');
 const { readLatest, freshnessLabel, countdownLabel, watchLatest, STATUSBAR_DIR } = require('./bridge');
-const { analyze } = require('./burnRate');
+const { analyze, prune } = require('./burnRate');
 const { loadReport } = require('./usage/indexer');
 const { serializeFor, defaultFileName } = require('./usage/exporter');
 const configStore = require('./config');
@@ -14,6 +14,7 @@ const configStore = require('./config');
 // burst at 4% projects an ETA that the next quiet minute invalidates.
 const BURN_NOTIFY_FLOOR = 25;
 const NOTIFIED_PATH = path.join(STATUSBAR_DIR, 'notified.json');
+const PRUNE_EVERY_MS = 24 * 60 * 60 * 1000;
 
 // Thresholds, tray title, report window and the pace warning come from here now
 // (~/.claude/statusbar/config.json), edited in the preferences window.
@@ -44,6 +45,7 @@ let prefsWindow = null;
 
 mb.on('ready', () => {
   applyLoginItem();
+  pruneHistory();
   render(readLatest());
   refreshUsage();
   watchLatest(render);
@@ -54,6 +56,10 @@ mb.on('ready', () => {
   // milliseconds after the first one — but it still reads the disk, so it stays
   // on its own slow interval instead of running on every render.
   setInterval(refreshUsage, 5 * 60 * 1000);
+  // Retention only advances while the app runs. The bridge keeps appending
+  // whether it's open or not, so the first launch after a long gap is the one
+  // that does the catching up — which is exactly what the startup call above is.
+  setInterval(pruneHistory, PRUNE_EVERY_MS);
 });
 
 mb.on('after-create-window', () => {
@@ -81,6 +87,17 @@ ipcMain.handle('statusbar:open-project', (_event, dir) => openProject(dir));
 ipcMain.handle('statusbar:report', () => lastReport ?? refreshUsage());
 ipcMain.handle('statusbar:refresh-report', () => refreshUsage());
 ipcMain.handle('statusbar:export-report', () => exportReport());
+
+function pruneHistory() {
+  const result = prune();
+  if (result.status === 'pruned') {
+    console.log(`rate-limits.jsonl: dropped ${result.dropped} samples past retention (${Math.round(result.freed / 1024)} KB)`);
+  } else if (result.status === 'failed') {
+    // Retention is housekeeping: failing to trim the history is not a reason to
+    // interfere with an app whose job is showing a percentage.
+    console.error('rate-limits.jsonl prune failed:', result.error);
+  }
+}
 
 function refreshUsage() {
   try {

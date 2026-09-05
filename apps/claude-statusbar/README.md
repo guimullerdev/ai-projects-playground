@@ -96,9 +96,16 @@ dizer alguma coisa. Três detalhes que decidem se o número é honesto:
   cai em cima do horário do reset, o texto diz isso (`estoura em cima do
   reset`) em vez de fingir precisão que não tem.
 
-O arquivo cresce pra sempre (retenção ainda é decisão em aberto no
-[plan.md](./plan.md)), então a leitura pega só os últimos 256 KB — a janela
-atual sempre cabe nisso.
+A leitura pega só os últimos 256 KB do arquivo — a janela atual sempre cabe
+nisso, e nada da projeção olha mais pra trás.
+
+O arquivo em si é podado em **30 dias**: o app corta na abertura e a cada 24h
+enquanto estiver rodando. O corte é "tudo até a última amostra fora da janela de
+retenção", copiando o resto byte a byte; linha torta (a ponte faz append sem
+lock, então um crash no meio da escrita deixa uma) nunca decide o limite — vai
+junto com as amostras velhas ao redor, em vez de travar a poda pra sempre. Como
+a retenção só anda com o app aberto, a primeira abertura depois de um tempo
+parado é a que põe em dia.
 
 ## Relatório
 
