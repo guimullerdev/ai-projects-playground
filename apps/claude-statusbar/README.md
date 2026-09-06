@@ -212,6 +212,32 @@ o app ([`src/config.js`](./src/config.js)).
 
 ## Empacotar
 
-Ainda não configurado neste v1 (roda via `npm start` em dev). `electron-builder`
-é o plano pra quando fizer sentido gerar um `.app` de verdade — mesma receita
-do `cambio-ai`.
+```sh
+npm run dist
+```
+
+Gera `dist/Claude Statusbar-<versão>-arm64.dmg` e o `.app` solto em
+`dist/mac-arm64/`. A configuração do `electron-builder` está no campo `build` do
+[package.json](./package.json); o que importa nela:
+
+- **`LSUIElement: 1`** — app de barra de menu de verdade: sem ícone no dock
+  desde o lançamento, sem a piscada que o `showDockIcon: false` do `menubar`
+  ainda deixa acontecer em dev.
+- **Ícone gerado por script** ([`scripts/make-app-icon.js`](./scripts/make-app-icon.js)),
+  não um binário no repo: desenha o mesmo ◐ da barra como anel de progresso em
+  1024px e empacota o `.icns` com `sips` + `iconutil`, ambos do próprio macOS.
+  O `npm run dist` roda isso antes de empacotar, e `build/` é ignorado no git.
+- **O instalador da ponte vai junto**, fora do `asar`, porque sem ele o app não
+  tem dado nenhum. No bundle:
+  `sh "/Applications/Claude Statusbar.app/Contents/Resources/install-bridge.sh"`.
+
+**Não é assinado.** Não existe Developer ID aqui, então o `.app` sai só com a
+assinatura ad-hoc que vem do próprio binário do Electron — roda local, mas o
+Gatekeeper reclama ao abrir vindo do `.dmg`. Primeira abertura: botão direito ›
+Abrir, ou `xattr -dr com.apple.quarantine "/Applications/Claude Statusbar.app"`.
+Assinar e notarizar só faz sentido se um dia isso for distribuído pra outra
+pessoa.
+
+O custo do Electron aparece aqui sem disfarce: o `.app` tem ~300 MB e o `.dmg`
+~128 MB, pra um app que mostra um número. É o mesmo trade-off anotado em
+[plan.md](./plan.md) — a alternativa continua sendo Swift + `MenuBarExtra`.

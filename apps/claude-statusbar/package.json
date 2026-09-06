@@ -6,12 +6,44 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "install-bridge": "sh scripts/install-bridge.sh"
+    "install-bridge": "sh scripts/install-bridge.sh",
+    "make-app-icon": "node scripts/make-app-icon.js",
+    "dist": "npm run make-app-icon && electron-builder --mac"
   },
   "dependencies": {
     "menubar": "^9.5.1"
   },
   "devDependencies": {
-    "electron": "^44.3.0"
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "dev.guimuller.claude-statusbar",
+    "productName": "Claude Statusbar",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts/install-bridge.sh",
+        "to": "install-bridge.sh"
+      }
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns",
+      "extendInfo": {
+        "LSUIElement": 1
+      }
+    },
+    "dmg": {
+      "title": "Claude Statusbar"
+    }
   }
 }
