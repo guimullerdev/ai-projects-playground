@@ -27,9 +27,14 @@ popover. Não precisa de chave de API nem de servidor: o app busca direto na
   compra, venda, variação do dia e o horário da cotação.
 - **Popover**:
   - compra em destaque, com variação do dia, venda, máxima e mínima de hoje;
+  - **card de sinal** — "perto da máxima / da mínima / faixa intermediária",
+    com a faixa que produziu o sinal escrita no texto;
   - **Hoje**: a trajetória intradiária da compra, com tooltip por cotação;
   - **Últimos 30 dias**: um ponto por pregão, mesmo tooltip;
   - rodapé com "Abrir no login", atualizar na hora e sair.
+
+- **Notificação nativa** quando o sinal entra em "perto da máxima" — no máximo
+  uma por dia, e só nesse estado.
 
 Só a compra vira linha nos gráficos: na escala de qualquer um dos dois o spread
 até a venda é fino demais pra virar uma segunda linha legível — a venda aparece
@@ -47,6 +52,17 @@ no topo e no tooltip.
   gráfico — e o que ele não viu (Mac desligado) não aparece.
 - Fim de semana e feriado mostram o **último pregão**, com a data ao lado do
   título, em vez de fingir que é a trajetória de hoje.
+- O **sinal** ([`src/signal.js`](./src/signal.js)) é a heurística que o POC
+  `pocs/dollar-cost-analyzer` já usava, portada sem mudar os cortes: a posição da
+  cotação na faixa dos últimos 30 pregões decide (≥ 75% do topo → converter,
+  ≤ 25% → esperar, entre os dois → sem sinal), e a tendência das duas últimas
+  semanas entra só como qualificador do texto, nunca como gatilho. Com menos de 7
+  pregões no histórico ele diz que não tem faixa pra comparar, em vez de chutar.
+- **A notificação só sai no estado "converter"**, que é o único que pede ação;
+  "esperar" e "sem sinal" são "não faça nada", e avisar sobre isso treinaria a
+  ignorar o aviso que importa. Dispara na *entrada* no estado, no máximo uma vez
+  por dia, com o controle guardado em `signal.json` pra que reabrir o app não
+  renda um segundo aviso igual.
 - Falha de rede não limpa a tela: a última cotação continua, com um aviso no
   popover e o rótulo marcando que está desatualizada.
 
@@ -54,8 +70,12 @@ no topo e no tooltip.
 
 - O gráfico do dia só tem o que o app presenciou (mais as ~100 cotações que a
   API devolve a cada busca). Primeira execução no meio do dia começa pela metade.
-- Enquanto o app não está aberto, nada é coletado nem avisado — notificação e
-  sinal são as próximas fases (ver [plan.md](./plan.md)).
+- Enquanto o app não está aberto, nada é coletado nem avisado: o sinal e a
+  notificação só existem com o app rodando. Um job de verdade 24/7 exigiria
+  backend, que está anotado como v4 no [plan.md](./plan.md).
+- O limiar da notificação **não é configurável ainda** — é o próprio corte de
+  75% da faixa. Preferências são outra fase; hoje mudar isso é editar
+  `src/signal.js`.
 - Sem empacotamento ainda: roda via `npm start`. `electron-builder` fica pra
   quando valer a pena ter um `.app`.
 - "Abrir no login" em modo dev registra o binário do Electron, não um `.app`

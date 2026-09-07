@@ -18,6 +18,7 @@
 
   function render(state) {
     renderQuote(state);
+    renderSignal(state);
     renderIntraday(state);
     renderDaily(state);
     loginItem.checked = Boolean(state.openAtLogin);
@@ -58,6 +59,17 @@
     change.textContent = pct === null ? '' : `${pctFmt.format(pct)}% hoje`;
     change.classList.toggle('is-up', pct > 0);
     change.classList.toggle('is-down', pct < 0);
+  }
+
+  // Cor nunca sozinha: o ícone e o título dizem o mesmo que a borda colorida,
+  // e o texto traz a faixa que produziu o sinal.
+  function renderSignal(state) {
+    const signal = state.signal;
+    if (!signal) return;
+    el('signal').className = `signal is-${signal.state}`;
+    el('signal-icon').textContent = signal.icon;
+    el('signal-title').textContent = signal.title;
+    el('signal-text').textContent = signal.text;
   }
 
   function renderIntraday(state) {

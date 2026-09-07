@@ -1,10 +1,11 @@
 'use strict';
 
 const path = require('path');
-const { app, ipcMain } = require('electron');
+const { app, ipcMain, Notification } = require('electron');
 const { menubar } = require('menubar');
 const { fetchAll, DAILY_DAYS } = require('./quotes');
-const { merge, latestSession } = require('./store');
+const { merge, latestSession, readSignal, writeSignal } = require('./store');
+const { analyze } = require('./signal');
 
 // Cotação de câmbio anda em minutos, não em segundos: 5 min mantém a barra
 // honesta sem martelar a API pública o dia inteiro.
@@ -37,6 +38,7 @@ const mb = menubar({
 });
 
 let state = { quote: null, daily: [], session: { date: null, samples: [] }, fetchedAt: null, error: null };
+let signal = analyze(null, []);
 let refreshing = null;
 
 mb.on('ready', () => {
@@ -81,6 +83,8 @@ function refresh() {
       // (máxima, mínima, variação) só vale pra tela de agora.
       const samples = merge([...ticks, { t: quote.t, bid: quote.bid, ask: quote.ask }]);
       state = { quote, daily, session: latestSession(samples), fetchedAt: Date.now(), error: null };
+      signal = analyze(quote, daily);
+      maybeNotify(signal);
     })
     .catch((err) => {
       // Falha de rede não apaga a tela: mantém a última cotação e marca o erro.
@@ -92,6 +96,29 @@ function refresh() {
       push();
     });
   return refreshing;
+}
+
+// Só 'convert' vira notificação: é o único estado que pede ação. 'wait' e
+// 'neutral' são "não faça nada", e avisar sobre isso treinaria o usuário a
+// ignorar o aviso que importa.
+//
+// Uma vez por dia, no máximo, e só na entrada no estado — enquanto a cotação
+// ficar no topo da faixa, o card continua lá pra quem abrir o popover.
+function maybeNotify(current) {
+  if (!Notification.isSupported()) return;
+  const today = new Date().toLocaleDateString('en-CA');
+  const previous = readSignal();
+  if (current.state !== 'convert') {
+    if (previous.state !== current.state) writeSignal({ ...previous, state: current.state });
+    return;
+  }
+  if (previous.state === 'convert' || previous.notifiedOn === today) {
+    writeSignal({ ...previous, state: current.state });
+    return;
+  }
+
+  new Notification({ title: `Câmbio — ${current.title}`, body: current.text }).show();
+  writeSignal({ state: current.state, notifiedOn: today });
 }
 
 function isStale() {
@@ -121,6 +148,7 @@ function trayTooltip() {
     `venda R$ ${rateFmt.format(state.quote.ask)}`,
   ];
   if (state.quote.pctChange !== null) parts.push(`${pctFmt.format(state.quote.pctChange)}% hoje`);
+  if (signal.state !== 'insufficient') parts.push(signal.title.toLowerCase());
   parts.push(isStale() ? 'desatualizado' : `atualizado às ${timeFmt.format(new Date(state.quote.t * 1000))}`);
   return parts.join(' · ');
 }
@@ -136,6 +164,7 @@ function serialize() {
     daily: state.daily,
     dailyDays: DAILY_DAYS,
     session: state.session,
+    signal,
     fetchedAt: state.fetchedAt,
     stale: isStale(),
     error: state.error,

@@ -85,6 +85,41 @@ body {
   color: var(--muted);
 }
 
+.signal {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.signal__icon {
+  flex: none;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.signal__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.signal__text {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.signal.is-convert { border-left-color: var(--up); }
+.signal.is-convert .signal__icon { color: var(--up); }
+.signal.is-wait { border-left-color: var(--down); }
+.signal.is-wait .signal__icon { color: var(--down); }
+
 .hero__change.is-up { color: var(--up); }
 .hero__change.is-down { color: var(--down); }
 

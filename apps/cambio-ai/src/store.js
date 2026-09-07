@@ -10,8 +10,8 @@ const { app } = require('electron');
 const MAX_SAMPLES = 4000;
 const KEEP_DAYS = 2; // hoje + o pregão anterior (pra não ficar vazio no fim de semana)
 
-function filePath() {
-  return path.join(app.getPath('userData'), 'intraday.json');
+function filePath(name = 'intraday.json') {
+  return path.join(app.getPath('userData'), name);
 }
 
 function dayKey(sample) {
@@ -64,4 +64,25 @@ function latestSession(samples) {
   return { date, samples: samples.filter((sample) => dayKey(sample) === date) };
 }
 
-module.exports = { merge, latestSession };
+// Estado da última notificação de sinal. Fica em disco, e não em memória, pra
+// que reabrir o app no mesmo dia não renda um segundo aviso do mesmo sinal.
+function readSignal() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(filePath('signal.json'), 'utf8'));
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSignal(data) {
+  try {
+    fs.mkdirSync(path.dirname(filePath()), { recursive: true });
+    fs.writeFileSync(filePath('signal.json'), JSON.stringify(data));
+  } catch {
+    // Melhor esforço, igual ao histórico: no pior caso o aviso se repete uma
+    // vez depois de um restart, o que é bem menos ruim que quebrar o refresh.
+  }
+}
+
+module.exports = { merge, latestSession, readSignal, writeSignal };
