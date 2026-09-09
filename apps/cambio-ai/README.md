@@ -76,15 +76,43 @@ no topo e no tooltip.
 - O limiar da notificação **não é configurável ainda** — é o próprio corte de
   75% da faixa. Preferências são outra fase; hoje mudar isso é editar
   `src/signal.js`.
-- Sem empacotamento ainda: roda via `npm start`. `electron-builder` fica pra
-  quando valer a pena ter um `.app`.
-- "Abrir no login" em modo dev registra o binário do Electron, não um `.app`
-  — só faz sentido de verdade depois do empacotamento.
+- "Abrir no login" em modo dev registra o binário do Electron, não um `.app` —
+  no app empacotado ele registra o próprio bundle.
+
+## Empacotar
+
+```sh
+npm run dist
+```
+
+Gera `dist/Cambio AI-<versão>-arm64.dmg` e o `.app` solto em `dist/mac-arm64/`.
+A configuração está no campo `build` do [package.json](./package.json), mesma
+receita do `claude-statusbar`: `LSUIElement: 1` (app de barra de menu de
+verdade, sem ícone no dock desde o lançamento) e ícone gerado por script.
+
+**O `productName` é "Cambio AI", sem acento, e isso não é descuido.** Com
+"Câmbio AI" o app empacotado morre no lançamento com `SIGTRAP`, sem escrever uma
+linha de log — o A/B é direto: mesmo código, só trocando o nome, ele passa a
+subir. O mecanismo provável é a validação de integridade do `app.asar`, que
+compara o caminho do bundle com o que está no `Info.plist`: o macOS guarda o
+nome do arquivo em NFD ("a" + acento combinante) e o plist carrega NFC, e a
+comparação falha. Desligar a validação de integridade pra manter o circunflexo
+seria trocar uma proteção por um enfeite; o nome dentro do app (título da
+janela, popover, tooltip) continua "Câmbio AI", e o `.dmg` também.
+
+**Não é assinado** — não existe Developer ID aqui, então o `.app` fica com a
+assinatura ad-hoc do próprio binário do Electron. Primeira abertura vinda do
+`.dmg`: botão direito › Abrir, ou
+`xattr -dr com.apple.quarantine "/Applications/Cambio AI.app"`.
 
 ## Manutenção
 
-O ícone da barra é gerado por script (template image preto + alfa, o macOS
-recolore sozinho):
+Os dois ícones são gerados por script, a partir do mesmo desenho
+([`scripts/mark.js`](./scripts/mark.js)): o template monocromático da barra de
+menu e o ícone colorido do `.app` (`npm run make-app-icon`, que o `npm run dist`
+já chama).
+
+O ícone da barra é template image (preto + alfa, o macOS recolore sozinho):
 
 ```bash
 npm run make-icon
