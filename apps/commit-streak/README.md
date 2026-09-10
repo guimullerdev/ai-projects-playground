@@ -45,6 +45,30 @@ npm install
 npm start
 ```
 
+## Empacotar
+
+```bash
+npm run dist
+```
+
+Gera `dist/Commit Streak-<versão>-arm64.dmg` e o `.app` em `dist/mac-arm64/`.
+Configuração no campo `build` do [package.json](./package.json), a mesma receita
+do `claude-statusbar` e do `cambio-ai`:
+
+- **`LSUIElement: 1`** — app de barra de menu desde o lançamento, sem ícone no
+  dock. É o que faltava pro `showDockIcon: false` não ser a única linha de
+  defesa.
+- **Ícone gerado por script** ([`scripts/make-app-icon.js`](./scripts/make-app-icon.js)):
+  um pedaço 3×3 do próprio heatmap, com a rampa azul da tabela do
+  [plan.md](./plan.md) e **uma célula vazia com anel** — o detalhe que define o
+  app, já que aqui o assunto é a ausência e não só o que foi feito.
+- **Não é assinado**: sem Developer ID, o `.app` fica com a assinatura ad-hoc do
+  binário do Electron. Primeira abertura vinda do `.dmg` por botão direito ›
+  Abrir, ou `xattr -dr com.apple.quarantine "/Applications/Commit Streak.app"`.
+
+Empacotado, o app passa a se ver como qualquer outro repo da máquina: o
+`config.json` continua em `~/Library/Application Support/commit-streak/`.
+
 ## Configuração
 
 Na primeira execução, `~/Library/Application Support/commit-streak/config.json`
