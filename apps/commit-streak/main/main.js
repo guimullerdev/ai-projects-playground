@@ -47,12 +47,18 @@ function computeState() {
   const committedToday = (commitMap.get(today) || []).length > 0;
   const isRestDay = config.restDays.includes(today);
   const streaks = scanner.computeStreaks(commitMap, config.restDays, today);
+  const weeklyGoal = scanner.computeWeeklyGoal(commitMap, config.restDays, today, config.weeklyGoal);
   const todayFlags = data.notifyFlags[today] || {};
 
   const { iconState, toFire } = scheduler.evaluate(
     config,
     todayFlags,
-    { committedToday, isRestDay, snoozedUntil: data.snoozeUntil },
+    {
+      committedToday,
+      isRestDay,
+      goalMet: Boolean(weeklyGoal && weeklyGoal.met),
+      snoozedUntil: data.snoozeUntil,
+    },
     new Date()
   );
 
@@ -64,6 +70,7 @@ function computeState() {
     toFire,
     streak: streaks.current,
     longestStreak: streaks.longest,
+    weeklyGoal,
     todayCommits: commitMap.get(today) || [],
     lastScan: new Date().toISOString(),
   };
@@ -75,7 +82,8 @@ function computeHistory() {
   const kpis = scanner.computeKPIs(commitMap, config.restDays, today);
   const firstDate = scanner.firstCommitDate(commitMap);
   const weeks = scanner.buildHeatmapWeeks(commitMap, config.restDays, today, firstDate);
-  return { today, kpis, weeks, theme: config.theme };
+  const weeklyGoal = scanner.computeWeeklyGoal(commitMap, config.restDays, today, config.weeklyGoal);
+  return { today, kpis, weeks, weeklyGoal, theme: config.theme };
 }
 
 /**

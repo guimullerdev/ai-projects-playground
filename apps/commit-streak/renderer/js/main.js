@@ -16,6 +16,8 @@ const kpiEls = {
   days365: document.getElementById('kpi-days365'),
   coverage: document.getElementById('kpi-coverage'),
   lostMonth: document.getElementById('kpi-lost-month'),
+  goal: document.getElementById('kpi-goal'),
+  goalTile: document.getElementById('kpi-goal-tile'),
 };
 
 const THEME_CYCLE = ['system', 'light', 'dark'];
@@ -34,6 +36,15 @@ function renderKpis(kpis) {
   kpiEls.days365.textContent = kpis.daysWithCommit365;
   kpiEls.coverage.textContent = `${kpis.coveragePct}%`;
   kpiEls.lostMonth.textContent = kpis.daysLostThisMonth;
+}
+
+// O tile só existe quando há meta configurada — sem ela, a linha de KPIs é a
+// de sempre, com cinco tiles.
+function renderGoal(goal) {
+  kpiEls.goalTile.hidden = !goal;
+  if (!goal) return;
+  kpiEls.goal.textContent = `${goal.done}/${goal.goal}`;
+  kpiEls.goal.className = `stat-value ${goal.met ? 'is-good' : goal.atRisk ? 'is-critical' : ''}`;
 }
 
 function renderTable(weeks) {
@@ -56,6 +67,7 @@ function renderTable(weeks) {
 
 function render(history) {
   renderKpis(history.kpis);
+  renderGoal(history.weeklyGoal);
   window.Heatmap.renderHeatmap({ weeks: history.weeks, gridEl, monthRowEl, tooltipEl });
   renderTable(history.weeks);
 }

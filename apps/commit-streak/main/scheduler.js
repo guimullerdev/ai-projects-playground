@@ -19,7 +19,7 @@ function minutesNow(now) {
  * Returns:
  *   { iconState: 'done' | 'rest' | 'ok' | 'late', toFire: {time, tone} | null }
  */
-function evaluate(config, todayFlags, { committedToday, isRestDay, snoozedUntil }, now = new Date()) {
+function evaluate(config, todayFlags, { committedToday, isRestDay, goalMet, snoozedUntil }, now = new Date()) {
   if (committedToday) return { iconState: 'done', toFire: null };
   if (isRestDay) return { iconState: 'rest', toFire: null };
 
@@ -27,6 +27,11 @@ function evaluate(config, todayFlags, { committedToday, isRestDay, snoozedUntil 
   const snoozed = snoozedUntil && now.getTime() < new Date(snoozedUntil).getTime();
 
   const iconState = nowMin >= parseHM(config.lateIconHour) ? 'late' : 'ok';
+
+  // Meta da semana batida: o ícone continua dizendo a verdade sobre hoje (não
+  // commitei), mas o app para de cobrar. É exatamente pra isso que a meta
+  // existe — quem escolheu "4 dias por semana" não quer ser cobrado no quinto.
+  if (goalMet) return { iconState, toFire: null };
 
   if (snoozed) return { iconState, toFire: null };
 

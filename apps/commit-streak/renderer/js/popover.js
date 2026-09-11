@@ -4,6 +4,7 @@ const heroSub = document.getElementById('hero-sub');
 const statStreak = document.getElementById('stat-streak');
 const statLongest = document.getElementById('stat-longest');
 const commitList = document.getElementById('commit-list');
+const goalLine = document.getElementById('goal');
 const btnSnooze = document.getElementById('btn-snooze');
 const btnRescan = document.getElementById('btn-rescan');
 const btnOpenMain = document.getElementById('btn-open-main');
@@ -26,6 +27,7 @@ function render(state) {
 
   statStreak.textContent = state.streak;
   statLongest.textContent = state.longestStreak;
+  renderGoal(state.weeklyGoal);
 
   commitList.innerHTML = '';
   if (!state.todayCommits.length) {
@@ -76,3 +78,23 @@ btnRescan.addEventListener('click', () => {
     render(state);
   });
 });
+
+// A meta só aparece quando existe: sem ela configurada, o popover é o de sempre.
+// O texto sempre diz o número (3 de 4), nunca só a cor — e "bateu" some com o
+// tom de cobrança em vez de virar outro tipo de cobrança.
+function renderGoal(goal) {
+  if (!goal) {
+    goalLine.hidden = true;
+    return;
+  }
+  goalLine.hidden = false;
+  goalLine.className = `goal ${goal.met ? 'met' : goal.atRisk ? 'at-risk' : ''}`;
+  const base = `Meta da semana: ${goal.done} de ${goal.goal} dias`;
+  if (goal.met) {
+    goalLine.textContent = `${base} — batida`;
+  } else if (goal.atRisk) {
+    goalLine.textContent = `${base} — faltam ${goal.remaining}, e só sobram ${goal.opportunities} dias`;
+  } else {
+    goalLine.textContent = `${base} · ${goal.opportunities} dias ainda disponíveis`;
+  }
+}

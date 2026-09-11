@@ -41,6 +41,9 @@ function defaultConfig() {
     ignoredDirRepos: [], // repo basenames toggled off by the user
     dayStartHour: 4, // commits before this hour count for the previous day
     restDays: [], // ['YYYY-MM-DD', ...] — don't break streak, don't notify
+    // Dias de commit por semana. 0 = sem meta, e o app segue sendo só o streak
+    // diário. Com meta batida, os lembretes do dia calam — é o ponto de ter meta.
+    weeklyGoal: 0,
     ignoredDirNames: ['node_modules', 'vendor', '.build', 'dist', 'build'],
     maxDepth: 3,
     countMerges: false,

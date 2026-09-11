@@ -182,6 +182,56 @@ function firstCommitDate(commitMap) {
  * The five KPI-row numbers from the plan: current streak, longest streak,
  * days-with-commit in the last 365, coverage %, and days lost this month.
  */
+/**
+ * Progresso da meta semanal — "4 dias por semana" em vez de corrente diária.
+ *
+ * A semana começa na segunda, como as linhas do heatmap. Dia de folga não conta
+ * como oportunidade: se a meta é 4 e sobram 2 dias, sendo 1 de folga, o app diz
+ * que a meta já era em vez de cobrar um dia que você marcou como livre.
+ *
+ * @returns {null|{goal, done, elapsed, opportunities, remaining, met, atRisk, weekStart}}
+ *   null quando não há meta configurada — aí o app é só o streak de sempre.
+ */
+function computeWeeklyGoal(commitMap, restDays, todayLogical, goal) {
+  if (!goal || goal < 1) return null;
+
+  const restSet = new Set(restDays);
+  const weekStart = startOfWeek(todayLogical);
+  const hasCommit = (d) => (commitMap.get(d) || []).length > 0;
+
+  let done = 0;
+  let elapsed = 0;
+  for (let d = weekStart; d <= todayLogical; d = addDays(d, 1)) {
+    elapsed += 1;
+    if (hasCommit(d)) done += 1;
+  }
+
+  // Hoje ainda conta como oportunidade enquanto não tiver commit.
+  let opportunities = hasCommit(todayLogical) ? 0 : (restSet.has(todayLogical) ? 0 : 1);
+  for (let i = 1; i <= 7 - elapsed; i += 1) {
+    if (!restSet.has(addDays(todayLogical, i))) opportunities += 1;
+  }
+
+  const remaining = Math.max(0, goal - done);
+  return {
+    goal,
+    done,
+    elapsed,
+    opportunities,
+    remaining,
+    met: done >= goal,
+    atRisk: remaining > opportunities,
+    weekStart,
+  };
+}
+
+/** Segunda-feira da semana de `dateStr`, no mesmo formato 'YYYY-MM-DD'. */
+function startOfWeek(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const weekday = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7; // 0 = segunda
+  return addDays(dateStr, -weekday);
+}
+
 function computeKPIs(commitMap, restDays, todayLogical) {
   const streaks = computeStreaks(commitMap, restDays, todayLogical);
   const hasCommit = (d) => (commitMap.get(d) || []).length > 0;
@@ -375,6 +425,8 @@ module.exports = {
   mondayOf,
   firstCommitDate,
   computeKPIs,
+  computeWeeklyGoal,
+  startOfWeek,
   bucketForCount,
   buildHeatmapWeeks,
   computeGaps,

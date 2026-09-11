@@ -75,3 +75,21 @@ Na primeira execução, `~/Library/Application Support/commit-streak/config.json
 é criado com valores default (autor detectado do `git config` global, raiz
 `~/Documents/Github`, dia lógico começando às 4h). Edite o arquivo e reinicie
 o app pra aplicar.
+
+### Meta semanal
+
+`"weeklyGoal": 4` troca a corrente diária por "4 dias por semana" — pra muita
+gente é meta mais saudável que streak ininterrupto. Com `0` (o default) nada
+muda: o app segue sendo só o streak.
+
+Com meta configurada:
+
+- o popover ganha uma linha (`Meta da semana: 3 de 4 dias`) e a janela completa,
+  um tile a mais;
+- a semana começa na **segunda**, como as linhas do heatmap;
+- **dia de folga não conta como oportunidade** — se faltam 2 dias e 1 é folga, o
+  app já diz que a meta está em risco, em vez de cobrar um dia que você marcou
+  como livre;
+- **meta batida cala os lembretes do resto da semana.** O ícone continua
+  dizendo a verdade sobre hoje (`○`, não commitei), mas as notificações param:
+  quem escolheu quatro dias por semana não quer ser cobrado no quinto.

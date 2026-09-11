@@ -311,6 +311,29 @@ button:hover {
   background: var(--surface);
   box-sizing: border-box;
 }
+/* Meta semanal: o número sempre está escrito, a cor só reforça. */
+.goal {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.goal.met {
+  color: var(--good);
+}
+
+.goal.at-risk {
+  color: var(--warning);
+}
+
+.stat-value.is-good {
+  color: var(--good);
+}
+
+.stat-value.is-critical {
+  color: var(--critical);
+}
+
 .heat-cell.status-normal.bucket-0 {
   box-shadow: inset 0 0 0 1px var(--heat-0-ring);
 }
