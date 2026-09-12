@@ -4,7 +4,8 @@ const path = require('path');
 const { app, ipcMain, Notification } = require('electron');
 const { menubar } = require('menubar');
 const { fetchAll, DAILY_DAYS } = require('./quotes');
-const { merge, latestSession, readSignal, writeSignal } = require('./store');
+const { merge, latestSession, readSignal, writeSignal, readSettings, writeSettings } = require('./store');
+const { compare, parseRate } = require('./husky');
 const { analyze } = require('./signal');
 
 // Cotação de câmbio anda em minutos, não em segundos: 5 min mantém a barra
@@ -39,6 +40,7 @@ const mb = menubar({
 
 let state = { quote: null, daily: [], session: { date: null, samples: [] }, fetchedAt: null, error: null };
 let signal = analyze(null, []);
+let settings = readSettings();
 let refreshing = null;
 
 mb.on('ready', () => {
@@ -66,6 +68,13 @@ ipcMain.handle('cambio:login-item', (_event, openAtLogin) => {
     app.setLoginItemSettings({ openAtLogin, openAsHidden: true });
   }
   return app.getLoginItemSettings().openAtLogin;
+});
+// A Husky não tem API pública: a taxa vem digitada e fica guardada entre
+// aberturas, porque ninguém quer redigitar o mesmo número toda vez que abre.
+ipcMain.handle('cambio:husky', (_event, value) => {
+  settings = writeSettings({ huskyRate: parseRate(value) });
+  push();
+  return settings.huskyRate;
 });
 ipcMain.on('cambio:resize', (_event, height) => {
   if (!mb.window || mb.window.isDestroyed() || !Number.isFinite(height)) return;
@@ -165,6 +174,8 @@ function serialize() {
     dailyDays: DAILY_DAYS,
     session: state.session,
     signal,
+    huskyRate: settings.huskyRate ?? null,
+    husky: compare(state.quote ? state.quote.bid : null, settings.huskyRate ?? null),
     fetchedAt: state.fetchedAt,
     stale: isStale(),
     error: state.error,

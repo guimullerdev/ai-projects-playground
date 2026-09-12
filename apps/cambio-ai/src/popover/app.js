@@ -14,11 +14,13 @@
   const money = (value) => (value === null || value === undefined ? '—' : `R$ ${rateFmt.format(value)}`);
 
   const refreshBtn = el('refresh');
+  const huskyInput = el('husky-rate');
   const loginItem = el('login-item');
 
   function render(state) {
     renderQuote(state);
     renderSignal(state);
+    renderHusky(state);
     renderIntraday(state);
     renderDaily(state);
     loginItem.checked = Boolean(state.openAtLogin);
@@ -59,6 +61,21 @@
     change.textContent = pct === null ? '' : `${pctFmt.format(pct)}% hoje`;
     change.classList.toggle('is-up', pct > 0);
     change.classList.toggle('is-down', pct < 0);
+  }
+
+  // O campo é do usuário enquanto ele está digitando: só recebe valor de volta
+  // quando está fora de foco, senão o app reescreve o número no meio da digitação.
+  function renderHusky(state) {
+    if (document.activeElement !== huskyInput) {
+      huskyInput.value = state.huskyRate ? rateFmt.format(state.huskyRate) : '';
+    }
+    const text = el('husky-text');
+    const husky = state.husky;
+    text.hidden = !husky || !husky.text;
+    if (!text.hidden) {
+      text.textContent = husky.text;
+      text.className = `husky__text is-${husky.state}`;
+    }
   }
 
   // Cor nunca sozinha: o ícone e o título dizem o mesmo que a borda colorida,
@@ -249,6 +266,10 @@
       refreshBtn.textContent = 'Atualizar';
     }
   });
+
+  // 'change', não 'input': o spread de um número pela metade ("5" a caminho de
+  // "5,05") seria uma conta errada piscando na tela a cada tecla.
+  huskyInput.addEventListener('change', () => window.cambio.setHusky(huskyInput.value));
 
   loginItem.addEventListener('change', async () => {
     loginItem.checked = await window.cambio.setLoginItem(loginItem.checked);

@@ -85,4 +85,25 @@ function writeSignal(data) {
   }
 }
 
-module.exports = { merge, latestSession, readSignal, writeSignal };
+// Preferências do usuário — hoje só a taxa da Husky, digitada no popover.
+function readSettings() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(filePath('settings.json'), 'utf8'));
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSettings(patch) {
+  const next = { ...readSettings(), ...patch };
+  try {
+    fs.mkdirSync(path.dirname(filePath()), { recursive: true });
+    fs.writeFileSync(filePath('settings.json'), JSON.stringify(next, null, 2));
+  } catch {
+    // Melhor esforço: sem gravar, a taxa vale só até fechar o app.
+  }
+  return next;
+}
+
+module.exports = { merge, latestSession, readSignal, writeSignal, readSettings, writeSettings };

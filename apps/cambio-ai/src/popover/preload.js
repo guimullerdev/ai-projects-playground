@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('cambio', {
   getState: () => ipcRenderer.invoke('cambio:state'),
   refresh: () => ipcRenderer.invoke('cambio:refresh'),
   setLoginItem: (openAtLogin) => ipcRenderer.invoke('cambio:login-item', openAtLogin),
+  setHusky: (rate) => ipcRenderer.invoke('cambio:husky', rate),
   resize: (height) => ipcRenderer.send('cambio:resize', height),
   quit: () => ipcRenderer.send('cambio:quit'),
 });

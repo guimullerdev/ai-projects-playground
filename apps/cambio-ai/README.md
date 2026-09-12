@@ -29,6 +29,8 @@ popover. Não precisa de chave de API nem de servidor: o app busca direto na
   - compra em destaque, com variação do dia, venda, máxima e mínima de hoje;
   - **card de sinal** — "perto da máxima / da mínima / faixa intermediária",
     com a faixa que produziu o sinal escrita no texto;
+  - **campo da Husky** — a taxa oferecida hoje, digitada à mão, com o spread
+    logo abaixo em percentual **e em reais por dólar**;
   - **Hoje**: a trajetória intradiária da compra, com tooltip por cotação;
   - **Últimos 30 dias**: um ponto por pregão, mesmo tooltip;
   - rodapé com "Abrir no login", atualizar na hora e sair.
@@ -58,6 +60,12 @@ no topo e no tooltip.
   ≤ 25% → esperar, entre os dois → sem sinal), e a tendência das duas últimas
   semanas entra só como qualificador do texto, nunca como gatilho. Com menos de 7
   pregões no histórico ele diz que não tem faixa pra comparar, em vez de chutar.
+- A **Husky não tem API pública**, então a taxa é digitada ([`src/husky.js`](./src/husky.js))
+  e fica guardada em `settings.json` — ninguém quer redigitar o mesmo número a
+  cada abertura. O campo grava no `change`, não a cada tecla: o spread de um
+  número pela metade ("5" a caminho de "5,05") seria uma conta errada piscando
+  na tela. Diferença abaixo de 0,05% é tratada como empate, porque a própria
+  cotação anda mais que isso entre duas atualizações.
 - **A notificação só sai no estado "converter"**, que é o único que pede ação;
   "esperar" e "sem sinal" são "não faça nada", e avisar sobre isso treinaria a
   ignorar o aviso que importa. Dispara na *entrada* no estado, no máximo uma vez

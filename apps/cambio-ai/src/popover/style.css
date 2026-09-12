@@ -115,6 +115,44 @@ body {
   color: var(--muted);
 }
 
+.husky {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.husky__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.husky__field input {
+  width: 96px;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-inset);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  text-align: right;
+}
+
+.husky__text {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* O spread é dinheiro que some: quando existe, o texto não fica esmaecido. */
+.husky__text.is-below { color: var(--down); }
+.husky__text.is-above { color: var(--up); }
+
 .signal.is-convert { border-left-color: var(--up); }
 .signal.is-convert .signal__icon { color: var(--up); }
 .signal.is-wait { border-left-color: var(--down); }
