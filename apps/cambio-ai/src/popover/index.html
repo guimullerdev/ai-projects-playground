@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Câmbio AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="popover">
+    <header class="popover__header">
+      <span class="popover__title">Dólar comercial</span>
+      <span id="freshness" class="popover__freshness">carregando…</span>
+    </header>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <section class="hero">
+      <div class="hero__main">
+        <p class="hero__label">Compra</p>
+        <p id="bid" class="hero__value">—</p>
+        <p id="change" class="hero__change"></p>
+      </div>
+      <dl class="hero__side">
+        <div><dt>Venda</dt><dd id="ask">—</dd></div>
+        <div><dt>Máx. hoje</dt><dd id="high">—</dd></div>
+        <div><dt>Mín. hoje</dt><dd id="low">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="chart">
+      <div class="chart__heading">
+        <h2>Hoje</h2>
+        <span id="intraday-note" class="chart__note"></span>
+      </div>
+      <div class="chart__wrap">
+        <svg id="intraday-chart" viewBox="0 0 348 108" role="img" aria-label="Trajetória da cotação de compra ao longo do dia"></svg>
+        <div id="intraday-tooltip" class="tooltip" hidden></div>
+      </div>
+      <p id="intraday-empty" class="chart__empty" hidden>Sem cotações do pregão ainda — o gráfico do dia se preenche conforme o app roda.</p>
+    </section>
+
+    <section class="chart">
+      <div class="chart__heading">
+        <h2 id="daily-title">Últimos 30 dias</h2>
+        <span class="chart__note">compra, um ponto por pregão</span>
+      </div>
+      <div class="chart__wrap">
+        <svg id="daily-chart" viewBox="0 0 348 118" role="img" aria-label="Cotação de compra nos últimos 30 dias"></svg>
+        <div id="daily-tooltip" class="tooltip" hidden></div>
+      </div>
+    </section>
+
+    <footer class="popover__footer">
+      <label class="toggle">
+        <input type="checkbox" id="login-item" />
+        <span>Abrir no login</span>
+      </label>
+      <div class="popover__actions">
+        <button id="refresh" class="link" type="button">Atualizar</button>
+        <button id="quit" class="link link--quiet" type="button">Sair</button>
+      </div>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

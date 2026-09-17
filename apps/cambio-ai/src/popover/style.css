@@ -1,0 +1,279 @@
+@import url('../shared/theme.css');
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 13px -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+/* O viewBox dos gráficos (348) é a largura da janela (380) menos este padding,
+ * pra que 1 unidade do SVG seja 1 pixel e nada distorça. */
+.popover {
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.popover__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.popover__title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.popover__freshness {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.popover__freshness.is-stale {
+  color: var(--down);
+}
+
+.banner {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-inset);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.banner[hidden] {
+  display: none;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero__label {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hero__value {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--buy);
+  line-height: 1.1;
+}
+
+.hero__change {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.hero__change.is-up { color: var(--up); }
+.hero__change.is-down { color: var(--down); }
+
+.hero__side {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.hero__side div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hero__side dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.hero__side dd {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 62px;
+}
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chart__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chart__heading h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chart__note,
+.chart__empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.chart__empty {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.chart__empty[hidden] {
+  display: none;
+}
+
+.chart__wrap {
+  position: relative;
+}
+
+.chart__wrap svg {
+  display: block;
+  width: 100%;
+}
+
+.chart__wrap svg.is-empty {
+  display: none;
+}
+
+.axis-label {
+  font-size: 8px;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-line {
+  stroke: var(--grid-line);
+  stroke-width: 1;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.line--buy { stroke: var(--buy); }
+
+.area {
+  fill: var(--buy);
+  opacity: 0.08;
+  stroke: none;
+}
+
+.point {
+  stroke: var(--bg);
+  stroke-width: 1.5;
+}
+
+.point--buy { fill: var(--buy); }
+.hover-point {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hover-target {
+  fill: transparent;
+}
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, -115%);
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 10px;
+  line-height: 1.45;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltip p {
+  margin: 0;
+}
+
+.tooltip .tooltip__when {
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+.popover__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.toggle input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.popover__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: default;
+}
+
+.link:disabled {
+  opacity: 0.5;
+}
+
+.link--quiet {
+  color: var(--muted);
+  font-weight: 400;
+}

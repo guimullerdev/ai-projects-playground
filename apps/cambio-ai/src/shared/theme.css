@@ -1,0 +1,54 @@
+/* Mesmos tokens do POC dollar-cost-analyzer e dos outros apps do repo, pra que
+ * a cotação tenha a mesma cara em qualquer lugar: a compra é a série verde
+ * (--buy), alta e baixa do dia usam --up/--down. */
+
+:root {
+  color-scheme: light;
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface-inset: #f0efe9;
+  --ink: #1c211e;
+  --muted: #5d655f;
+  --border: #e1ded4;
+  --accent: #1f6f5c;
+  --buy: #1f6f5c;
+  --grid-line: #e6e3d8;
+  --up: #1f6f5c;
+  --down: #b3402a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #10130f;
+    --surface: #171b16;
+    --surface-inset: #1d221c;
+    --ink: #ecece6;
+    --muted: #9aa39c;
+    --border: #2a2f28;
+    --accent: #56c2a2;
+    --buy: #56c2a2;
+    --grid-line: #262b23;
+    --up: #56c2a2;
+    --down: #e07a5f;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #10130f;
+  --surface: #171b16;
+  --surface-inset: #1d221c;
+  --ink: #ecece6;
+  --muted: #9aa39c;
+  --border: #2a2f28;
+  --accent: #56c2a2;
+  --buy: #56c2a2;
+  --grid-line: #262b23;
+  --up: #56c2a2;
+  --down: #e07a5f;
+}
+
+* {
+  box-sizing: border-box;
+}
