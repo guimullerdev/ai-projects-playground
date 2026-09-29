@@ -4,9 +4,6 @@ App de barra de menu do macOS que mostra o quanto da sua assinatura Claude já
 foi consumido (janela de 5h e de 7 dias) e quando reseta — sem precisar abrir
 o terminal ou esperar tomar um "limite atingido" no meio de uma resposta.
 
-Ver [plan.md](./plan.md) para o raciocínio completo (de onde vêm os dados, o
-que foi descartado e por quê, e as fases seguintes).
-
 ## Como funciona, resumido
 
 O Claude Code já manda esses números pro seu script de `statusline` toda vez
@@ -239,5 +236,5 @@ Assinar e notarizar só faz sentido se um dia isso for distribuído pra outra
 pessoa.
 
 O custo do Electron aparece aqui sem disfarce: o `.app` tem ~300 MB e o `.dmg`
-~128 MB, pra um app que mostra um número. É o mesmo trade-off anotado em
-[plan.md](./plan.md) — a alternativa continua sendo Swift + `MenuBarExtra`.
+~128 MB, pra um app que mostra um número. A alternativa continua sendo Swift +
+`MenuBarExtra`: nativo, ~20 MB, sem runtime.
