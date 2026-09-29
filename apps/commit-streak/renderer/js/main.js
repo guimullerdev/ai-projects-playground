@@ -7,7 +7,7 @@ const btnThemeToggle = document.getElementById('btn-theme-toggle');
 const heatmapSection = document.getElementById('heatmap-section');
 const tableSection = document.getElementById('table-section');
 const gapListEl = document.getElementById('gap-list');
-const btnGapsRefresh = document.getElementById('btn-gaps-refresh');
+const btnRefresh = document.getElementById('btn-refresh');
 const repoBodyEl = document.getElementById('repo-body');
 
 const kpiEls = {
@@ -73,20 +73,31 @@ function render(history) {
 }
 
 function loadGaps() {
-  btnGapsRefresh.disabled = true;
-  btnGapsRefresh.textContent = 'Verificando…';
-  window.commitStreak.getGaps().then((gaps) => {
+  return window.commitStreak.getGaps().then((gaps) => {
     window.Gaps.renderGaps(gaps, gapListEl, {
       onMarkRest: (gap) => window.commitStreak.markGapAsRest(gap).then(loadGaps),
       onOpenEditor: (repoPath) => window.commitStreak.openInEditor(repoPath),
     });
-    btnGapsRefresh.disabled = false;
-    btnGapsRefresh.textContent = 'Atualizar';
   });
 }
 
+// Rescan de verdade, e não só um redesenho do que já está em memória: sem isso o
+// botão mente quando o cache está atrás do que está no disco. O heatmap e os KPIs
+// chegam sozinhos pelo 'history:update' que o rescan dispara no main.
+function refreshAll() {
+  btnRefresh.disabled = true;
+  btnRefresh.textContent = 'Atualizando…';
+  return window.commitStreak
+    .rescan()
+    .then(() => Promise.all([loadGaps(), loadRepos()]))
+    .finally(() => {
+      btnRefresh.disabled = false;
+      btnRefresh.textContent = 'Atualizar';
+    });
+}
+
 function loadRepos() {
-  window.commitStreak.getRepos().then((repos) => {
+  return window.commitStreak.getRepos().then((repos) => {
     window.Gaps.renderRepos(repos, repoBodyEl, {
       onToggle: (repo, enabled) => window.commitStreak.toggleRepo(repo, enabled).then(loadRepos),
     });
@@ -100,7 +111,7 @@ window.commitStreak.getHistory().then((history) => {
 window.commitStreak.onHistoryUpdate(render);
 loadGaps();
 loadRepos();
-btnGapsRefresh.addEventListener('click', loadGaps);
+btnRefresh.addEventListener('click', refreshAll);
 
 btnTableToggle.addEventListener('click', () => {
   const showingTable = !tableSection.hidden;

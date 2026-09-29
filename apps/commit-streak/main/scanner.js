@@ -356,36 +356,34 @@ async function pool(tasks, limit) {
 }
 
 const FULL_SCAN_SINCE = '13 months ago';
-const FULL_RESCAN_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // weekly
-const INCREMENTAL_OVERLAP_DAYS = 2; // re-fetch a small overlap to catch amends/rebases
 
 /**
- * Discover repos and refresh the cache: full `git log` on first sight or once
- * a week, an incremental `--since` window otherwise. Returns the updated
- * cache object (mutates `cache.repos` in place) plus the merged commit map.
+ * Discover repos and rebuild the cache from a full `git log` per repo. Returns
+ * the updated cache object (mutates `cache.repos` in place) plus the commit map.
+ *
+ * Deliberately NOT incremental. The obvious optimization — ask git only for
+ * commits since the last scan and merge them into the cached list — is wrong
+ * here, twice over:
+ *
+ *   - `git log --since` filters by COMMITTER date, not author date. A commit
+ *     written with a backdated committer date is born outside the window, so an
+ *     incremental scan never sees it at all — it only shows up on the next full
+ *     pass, days later.
+ *   - Merging by hash can only add. A commit whose hash changed (rebase, amend)
+ *     or that was dropped outright stays in the cache forever, as a day that
+ *     looks filled but isn't.
+ *
+ * A full pass over ~26 repos costs ~200ms, run every few minutes off the main
+ * thread. That is a cheap price for a heatmap that is never quietly wrong.
  */
-async function refreshCache(config, cache, { force = false } = {}) {
+async function refreshCache(config, cache) {
   const repoPaths = discoverRepos(config.roots, config.ignoredDirNames, config.maxDepth);
-  const now = Date.now();
 
   const tasks = repoPaths.map((repoPath) => async () => {
-    const prev = cache.repos[repoPath];
-    const needsFull =
-      force || !prev || now - new Date(prev.lastScan).getTime() > FULL_RESCAN_INTERVAL_MS;
-
-    let since = FULL_SCAN_SINCE;
-    if (!needsFull && prev.lastScan) {
-      const overlap = new Date(prev.lastScan);
-      overlap.setDate(overlap.getDate() - INCREMENTAL_OVERLAP_DAYS);
-      since = overlap.toISOString();
-    }
-
-    const fresh = await scanRepo(repoPath, config.authors, since, {
+    const commits = await scanRepo(repoPath, config.authors, FULL_SCAN_SINCE, {
       countMerges: config.countMerges,
     });
-
-    const merged = needsFull ? fresh : mergeByHash(prev.commits || [], fresh);
-    cache.repos[repoPath] = { lastScan: new Date().toISOString(), commits: merged };
+    cache.repos[repoPath] = { lastScan: new Date().toISOString(), commits };
   });
 
   await pool(tasks, 4);
@@ -404,12 +402,6 @@ async function refreshCache(config, cache, { force = false } = {}) {
 
   const commitMap = buildCommitMap(all, config.dayStartHour);
   return { cache, commitMap, repoPaths };
-}
-
-function mergeByHash(oldCommits, freshCommits) {
-  const byHash = new Map(oldCommits.map((c) => [c.hash, c]));
-  for (const c of freshCommits) byHash.set(c.hash, c);
-  return [...byHash.values()];
 }
 
 module.exports = {

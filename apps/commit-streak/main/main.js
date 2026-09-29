@@ -11,7 +11,7 @@ const pending = require('./pending');
 app.dock?.hide();
 
 const TICK_MS = 60 * 1000;
-const RESCAN_MS = 5 * 60 * 1000; // cheap incremental rescan, in the background
+const RESCAN_MS = 5 * 60 * 1000; // full rescan in the background — ~200ms, see scanner.refreshCache
 
 const ICONS = { done: '●', rest: '◆', ok: '○', late: '⊙' };
 
@@ -34,8 +34,8 @@ function enabledRepoPaths() {
   return lastRepoPaths.filter((p) => !disabled.has(path.basename(p)));
 }
 
-async function runScan({ force = false } = {}) {
-  const result = await scanner.refreshCache(config, data, { force });
+async function runScan() {
+  const result = await scanner.refreshCache(config, data);
   commitMap = result.commitMap;
   lastRepoPaths = result.repoPaths;
   store.saveData(userDataDir, data);
@@ -268,8 +268,7 @@ function createTray() {
   const menu = Menu.buildFromTemplate([
     { label: 'Abrir janela completa', click: () => createMainWindow() },
     { type: 'separator' },
-    { label: 'Rescan agora', click: () => runScan({ force: false }) },
-    { label: 'Rescan completo', click: () => runScan({ force: true }) },
+    { label: 'Rescan agora', click: () => runScan() },
     { type: 'separator' },
     { label: 'Sair', role: 'quit' },
   ]);
@@ -286,10 +285,10 @@ app.whenReady().then(async () => {
   createTray();
   createPopover();
 
-  await runScan({ force: false });
+  await runScan();
 
   setInterval(() => pushState(), TICK_MS);
-  setInterval(() => runScan({ force: false }), RESCAN_MS);
+  setInterval(() => runScan(), RESCAN_MS);
 
   // laptop woke up: the wall clock jumped, re-check right away instead of
   // waiting up to 60s (or missing a notification entirely if it was asleep
@@ -300,7 +299,7 @@ app.whenReady().then(async () => {
 ipcMain.handle('state:get', () => computeState());
 
 ipcMain.handle('scan:rescan', async () => {
-  await runScan({ force: false });
+  await runScan();
   return computeState();
 });
 
@@ -337,7 +336,7 @@ ipcMain.handle('repos:toggle', async (_event, repo, enabled) => {
   else disabled.add(repo);
   config.ignoredDirRepos = [...disabled];
   store.saveConfig(userDataDir, config);
-  await runScan({ force: false }); // toggling changes which commits count — recompute
+  await runScan(); // toggling changes which commits count — recompute
   return computeRepoList();
 });
 

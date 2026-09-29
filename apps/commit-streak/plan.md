@@ -165,29 +165,52 @@ O estado de hoje (commitei / ainda não / passou da hora) usa a **paleta de stat
 
 Variáveis CSS no `:root`, valores de dark redeclarados sob `@media (prefers-color-scheme: dark)` **e** sob `[data-theme="dark"]`, pra um toggle manual vencer nos dois sentidos. Nenhuma cor definida só dentro do bloco dark.
 
-## Estrutura de arquivos (proposta)
+## Estrutura de arquivos
 
 ```
 apps/commit-streak/
 ├── plan.md              # este arquivo
 ├── README.md            # como rodar e empacotar
 ├── package.json
+├── package-lock.json
 ├── main/
-│   ├── main.js          # ciclo de vida, tray, popover, janela
-│   ├── scanner.js       # descoberta de repos + git log + dedupe
+│   ├── main.js          # ciclo de vida, tray, popover, janela, handlers de IPC
+│   ├── scanner.js       # descoberta de repos, git log, dedupe + todo o cálculo
+│   │                    #   (streaks, KPIs, lacunas, semanas do heatmap)
 │   ├── pending.js       # dirty worktree / não pushado / stash
 │   ├── scheduler.js     # tick de 60s, flags do dia, soneca, resume
-│   ├── store.js         # config + cache em userData/data.json
+│   ├── store.js         # config.json + data.json em userData
 │   └── preload.js       # contextBridge, API estreita
 └── renderer/
-    ├── popover.html
+    ├── popover.html     # popover do tray
     ├── index.html       # janela completa
     ├── style.css        # design tokens + tema claro/escuro
     └── js/
-        ├── heatmap.js   # grade, rampa, tooltip, tabela alternativa
-        ├── stats.js     # streak, cobertura, lacunas
-        └── gaps.js      # painel de lacunas + ações
+        ├── popover.js   # entrypoint do popover
+        ├── main.js      # entrypoint da janela: KPIs, tabela, tema, orquestração
+        ├── heatmap.js   # grade, rampa, tooltip, navegação por teclado
+        └── gaps.js      # painel de lacunas + tabela de repos
 ```
+
+**Onde o cálculo mora, e por quê.** O plano original previa um `renderer/js/stats.js`
+com streak, cobertura e lacunas. Ele não existe: `computeStreaks`, `computeKPIs`,
+`computeGaps` e `buildHeatmapWeeks` ficaram todos em `main/scanner.js`, junto da
+leitura do `git log`.
+
+A razão é que essas funções operam sobre o mapa de commits completo — o mesmo dado
+que o main já tem em cache e que o tray precisa para decidir o ícone e a notificação.
+Se o cálculo morasse no renderer, o streak teria que ser computado duas vezes (uma
+para o tray, outra para a janela) a partir de duas cópias do mapa, com risco de
+divergirem. Do jeito que ficou, o renderer recebe dado pronto pelo IPC e só desenha:
+`heatmap.js` recebe `weeks` no formato final, `gaps.js` recebe as lacunas já agrupadas.
+
+O `scanner.js` não importa nada de Electron justamente por isso — dá para rodar e
+testar as funções de cálculo com `node` puro, sem subir o app.
+
+Cada `.html` do renderer carrega seu próprio entrypoint (`popover.js` ou `main.js`);
+`heatmap.js` e `gaps.js` são carregados só pela janela completa e se expõem em
+`window.Heatmap` / `window.Gaps`, sem bundler nem módulos ES — mesmo padrão sem build
+step do resto do repo.
 
 ## Cache e performance
 
@@ -215,17 +238,29 @@ No renderer: `contextIsolation: true`, `nodeIntegration: false`, preload expondo
 
 ## Fases
 
-**v1 — o loop mínimo que já muda o comportamento**
+**Status: v3 entregue, v4 começada pelas metas.** As três primeiras fases estão no
+`main`, o empacotamento saiu (`eef9d59`, 10/09/2026 — `npm run dist` gera o `.dmg`
+com `LSUIElement` e ícone gerado por script, um pedaço 3×3 do próprio heatmap com a
+célula vazia de anel), e da v4 as metas semanais já existem (`6cbea27`, 11/09/2026).
+Falta da v4 a API do GitHub e o relatório semanal.
+
+**v1 — o loop mínimo que já muda o comportamento** — ✅ feito (`cddbc77`, 10/07/2026)
 Scanner + cache + tray com os três estados + notificações escalonadas + popover com estado de hoje e streak. Sem janela completa, sem heatmap. Se essa parte não me faz commitar mais, o resto não vale a pena.
 
-**v2 — o retrovisor**
+**v2 — o retrovisor** — ✅ feito (`5af634a`, 15/07/2026)
 Janela completa: heatmap de 53 semanas, KPI row, tabela alternativa, temas. É aqui que entra a pergunta "quais dias eu perdi".
 
-**v3 — ajeitar as lacunas**
+**v3 — ajeitar as lacunas** — ✅ feito (`c257aed`, 16/07/2026)
 Detecção de trabalho pendente (dirty / não pushado / stash), painel de lacunas agrupadas por quebra de streak, ação de abrir no editor, marcar dia como folga.
 
-**v4 — se fizer falta**
-Integração opcional com a API do GitHub, pra pegar commit feito em outra máquina ou pela web (mesclando com o dado local pelo hash). Relatório semanal. Metas ("4 dias por semana" em vez de streak diário) — que pra muita gente é meta mais saudável que corrente ininterrupta.
+**v4 — se fizer falta** — 🟡 parcial (`6cbea27`, 11/09/2026)
+- ✅ **Metas** ("4 dias por semana" em vez de streak diário): `weeklyGoal` no config, semana
+  começando na segunda como o heatmap, dia de folga não contando como oportunidade, e —
+  o ponto de ter meta — **meta batida cala os lembretes do resto da semana**, sem mentir
+  no ícone sobre o dia de hoje.
+- ⬜ Integração opcional com a API do GitHub, pra pegar commit feito em outra máquina ou
+  pela web (mesclando com o dado local pelo hash).
+- ⬜ Relatório semanal.
 
 ## Decisões em aberto
 
