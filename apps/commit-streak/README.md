@@ -23,7 +23,7 @@ completo por trás de cada decisão.
   zero com anel, tooltip no hover, navegação por setas.
 - Toggle de tabela (mesmos dados, acessível) e de tema (sistema/claro/escuro).
 
-## v3 (este estado)
+## v3
 
 - **Detecção de trabalho pendente** (`main/pending.js`): dirty worktree,
   commits à frente do upstream, stash — por repo.
@@ -36,7 +36,7 @@ completo por trás de cada decisão.
 - Lista de repositórios com toggle de "contabilizar" (persiste em
   `config.ignoredDirRepos`, dispara rescan).
 
-## v4 (parcial)
+## v4 (este estado, parcial)
 
 - **Meta semanal** em vez de corrente diária — ver [Meta semanal](#meta-semanal).
 - **Relatório semanal** na janela completa: uma linha por semana (segunda→domingo,
