@@ -12,6 +12,7 @@ app.dock?.hide();
 
 const TICK_MS = 60 * 1000;
 const RESCAN_MS = 5 * 60 * 1000; // full rescan in the background — ~200ms, see scanner.refreshCache
+const PRUNE_MS = 24 * 60 * 60 * 1000; // poda das flags de notificação antigas
 
 const ICONS = { done: '●', rest: '◆', ok: '○', late: '⊙' };
 
@@ -40,6 +41,18 @@ async function runScan() {
   lastRepoPaths = result.repoPaths;
   store.saveData(userDataDir, data);
   pushState();
+}
+
+/**
+ * Poda as flags de notificação velhas e grava só se algo saiu.
+ *
+ * Roda na abertura e a cada 24h. Como o intervalo só anda com o app aberto, é a
+ * abertura que põe em dia depois de um tempo parado — mesmo arranjo da poda do
+ * `claude-statusbar`.
+ */
+function pruneNotifyFlags() {
+  const removed = store.pruneNotifyFlags(data, todayLogical());
+  if (removed > 0) store.saveData(userDataDir, data);
 }
 
 function computeState() {
@@ -292,6 +305,8 @@ app.whenReady().then(async () => {
 
   app.setLoginItemSettings({ openAtLogin: !!config.loginItem });
 
+  pruneNotifyFlags();
+
   createTray();
   createPopover();
 
@@ -299,6 +314,7 @@ app.whenReady().then(async () => {
 
   setInterval(() => pushState(), TICK_MS);
   setInterval(() => runScan(), RESCAN_MS);
+  setInterval(() => pruneNotifyFlags(), PRUNE_MS);
 
   // laptop woke up: the wall clock jumped, re-check right away instead of
   // waiting up to 60s (or missing a notification entirely if it was asleep

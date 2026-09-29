@@ -210,7 +210,7 @@ divergirem. Do jeito que ficou, o renderer recebe dado pronto pelo IPC e só des
 
 O `scanner.js` não importa nada de Electron justamente por isso — dá para rodar e
 testar as funções de cálculo com `node` puro, sem subir o app. Desde 29/09/2026
-isso deixou de ser só uma possibilidade: `npm test` roda 53 testes em `test/`,
+isso deixou de ser só uma possibilidade: `npm test` roda 64 testes em `test/`,
 com o `node --test` embutido (sem dependência nova, como o resto do repo).
 
 Os testes miram nas **decisões** registradas neste plano, não no formato interno
@@ -232,13 +232,24 @@ step do resto do repo.
 
 ## Cache e performance
 
-`git log` em 30 repos na primeira execução leva segundos. Então:
-
 - Cache por repo em `userData/data.json`: `{ repo, lastScan, commits: [...] }`.
-- Rescan **incremental**: `--since=<lastScan menos 2 dias>` (a folga de 2 dias captura amend e rebase recente), resultado mesclado por hash.
-- Scan completo só no primeiro uso, semanalmente, ou sob demanda no botão.
+- **Todo scan é completo**, e o rescan incremental que este plano previa foi
+  removido: `--since` filtra por *committer date*, então commit com data
+  backdated nascia fora da janela e o merge por hash só sabia acrescentar —
+  commit reescrito ou descartado ficava no cache pra sempre, como um dia que
+  parecia cheio e não estava. A medição desfez a premissa: 26 repos custam
+  ~200ms, rodando a cada 5 min fora da thread principal. Barato demais pra
+  trocar por um heatmap que pode estar errado em silêncio.
 - Repos varridos em paralelo com limite de concorrência (4) — não adianta abrir 30 processos `git`.
 - A UI nunca espera o scan: renderiza do cache e atualiza quando chega.
+- **`notifyFlags` tem retenção de 30 dias** (`store.pruneNotifyFlags`, rodando na
+  abertura e a cada 24h). Era uma chave por dia, guardada pra sempre: pequeno,
+  lento e invisível — o mesmo formato de vazamento que o `rate-limits.jsonl` do
+  `claude-statusbar` tinha. O app só lê as flags de **hoje**, então um dia
+  bastaria; os 30 são pra dar pra conferir depois se ele avisou. Como o
+  intervalo só anda com o app aberto, é a abertura que põe em dia depois de um
+  tempo parado. O cache de commits não precisa de poda: já tem teto nos 13 meses
+  do `git log`.
 
 ## Privacidade
 

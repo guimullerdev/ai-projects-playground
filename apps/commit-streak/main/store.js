@@ -10,6 +10,10 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+// Só pela aritmética de data (ancorada no meio-dia UTC). O scanner não importa
+// nada daqui, então não há ciclo — e duplicar a conta de datas seria pior.
+const { addDays } = require('./scanner');
+
 function paths(userDataDir) {
   return {
     config: path.join(userDataDir, 'config.json'),
@@ -91,6 +95,45 @@ function saveConfig(userDataDir, cfg) {
   writeJSON(paths(userDataDir).config, cfg);
 }
 
+// Quantos dias de flag de notificação ficam guardados. O app só lê as de HOJE
+// (`data.notifyFlags[today]`), então um dia bastaria; os 30 são pra dar pra
+// olhar depois e responder "ele me avisou na terça?" — custa três booleanos por
+// dia. O número é folgado de propósito, não afinado.
+const NOTIFY_FLAGS_RETENTION_DAYS = 30;
+
+const LOGICAL_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Tira do `data.json` as flags de notificação fora da janela de retenção.
+ *
+ * Sem isso o arquivo ganha uma chave por dia **pra sempre**: cresce devagar e
+ * ninguém nota, que é exatamente o formato do vazamento que o
+ * `rate-limits.jsonl` do `claude-statusbar` tinha antes da poda de 30 dias.
+ *
+ * Chave que não é uma data 'YYYY-MM-DD' também sai: a leitura é sempre por dia
+ * lógico, então nada com outro formato pode ser lido de volta — é peso morto
+ * por construção, não dado de alguém.
+ *
+ * Só mexe em `notifyFlags`. O cache de commits já tem teto (os 13 meses do
+ * `git log`), e `snoozeUntil` é um campo só.
+ *
+ * @returns {number} quantas entradas saíram — quem chamou decide se vale gravar.
+ */
+function pruneNotifyFlags(data, todayLogical, retentionDays = NOTIFY_FLAGS_RETENTION_DAYS) {
+  const flags = data && data.notifyFlags;
+  if (!flags || typeof flags !== 'object') return 0;
+
+  const cutoff = addDays(todayLogical, -retentionDays);
+  let removed = 0;
+  for (const key of Object.keys(flags)) {
+    if (!LOGICAL_DATE_RE.test(key) || key < cutoff) {
+      delete flags[key];
+      removed += 1;
+    }
+  }
+  return removed;
+}
+
 function defaultData() {
   return {
     repos: {}, // repoPath -> { lastScan: iso, commits: [{hash, date, msg}] }
@@ -109,4 +152,13 @@ function saveData(userDataDir, data) {
   writeJSON(paths(userDataDir).data, data);
 }
 
-module.exports = { loadConfig, saveConfig, loadData, saveData, defaultConfig };
+module.exports = {
+  loadConfig,
+  saveConfig,
+  loadData,
+  saveData,
+  defaultConfig,
+  defaultData,
+  pruneNotifyFlags,
+  NOTIFY_FLAGS_RETENTION_DAYS,
+};

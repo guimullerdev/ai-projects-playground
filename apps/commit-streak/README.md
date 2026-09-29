@@ -66,7 +66,7 @@ npm test
 ```
 
 `node --test` embutido, sem dependência nova — o repo não tem build step e os
-testes também não precisam de um. São 53, em `test/`:
+testes também não precisam de um. São 64, em `test/`:
 
 - `scanner.test.js` — a lógica pura: virada do dia às 4h, dedupe por hash,
   streak com folga no meio, lacunas agrupadas, KPIs, meta semanal, estados das
@@ -74,6 +74,8 @@ testes também não precisam de um. São 53, em `test/`:
 - `weekly-report.test.js` — as regras do relatório: semana incompleta fora da
   média e nunca marcada como meta perdida, folga saindo do denominador,
   tendência só com 8 semanas fechadas.
+- `store.test.js` — a poda das flags de notificação: o que sai, o que fica na
+  borda exata da janela, e que ela não encosta no resto do `data.json`.
 - `scanner.git.test.js` — descoberta de repos e leitura do `git log` contra
   repositórios de verdade criados num diretório temporário (com
   `GIT_AUTHOR_DATE` fixo, pra não depender de que horas são agora). Sem mock de
