@@ -460,12 +460,18 @@ function summarizeWeeks(weeks, goal) {
   if (complete.length >= 8) {
     const recent = meanDays(complete.slice(0, 4));
     const previous = meanDays(complete.slice(4, 8));
-    const delta = round1(recent - previous);
+    // A direção sai do delta CRU, não do arredondado. Decidir em cima do
+    // arredondado torce o resultado pra um lado só: ganhar um dia em quatro
+    // semanas dá +0,25, que arredonda pra +0,3 e passa do corte, enquanto
+    // perder um dia dá -0,25, que arredonda pra -0,2 e não passa (o JS
+    // arredonda meio pra cima, inclusive nos negativos). O app diria "em alta"
+    // por um dia a mais e "estável" por um dia a menos.
+    const rawDelta = recent - previous;
     trend = {
       recent: round1(recent),
       previous: round1(previous),
-      delta,
-      direction: delta > 0.25 ? 'up' : delta < -0.25 ? 'down' : 'flat',
+      delta: round1(rawDelta),
+      direction: rawDelta > 0.25 ? 'up' : rawDelta < -0.25 ? 'down' : 'flat',
     };
   }
 
