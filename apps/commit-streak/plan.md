@@ -173,6 +173,7 @@ apps/commit-streak/
 ├── README.md            # como rodar e empacotar
 ├── package.json
 ├── package-lock.json
+├── test/                # node --test: scanner, relatório semanal e a camada git
 ├── main/
 │   ├── main.js          # ciclo de vida, tray, popover, janela, handlers de IPC
 │   ├── scanner.js       # descoberta de repos, git log, dedupe + todo o cálculo
@@ -208,7 +209,21 @@ divergirem. Do jeito que ficou, o renderer recebe dado pronto pelo IPC e só des
 `heatmap.js` recebe `weeks` no formato final, `gaps.js` recebe as lacunas já agrupadas.
 
 O `scanner.js` não importa nada de Electron justamente por isso — dá para rodar e
-testar as funções de cálculo com `node` puro, sem subir o app.
+testar as funções de cálculo com `node` puro, sem subir o app. Desde 29/09/2026
+isso deixou de ser só uma possibilidade: `npm test` roda 53 testes em `test/`,
+com o `node --test` embutido (sem dependência nova, como o resto do repo).
+
+Os testes miram nas **decisões** registradas neste plano, não no formato interno
+das funções: a virada do dia às 4h, folga que não quebra streak, semana
+incompleta que não vira semana ruim, o dia zero que só ganha anel quando é
+lacuna de verdade. `scanner.git.test.js` monta repositórios de verdade num
+diretório temporário em vez de mockar o `execFile`, porque o que quebra nessa
+camada é o contrato com o git — formato de data, filtro de autor, merge.
+
+Escrever esses testes já pagou: a tendência do relatório decidia "alta/queda/
+estável" em cima do delta **arredondado**, e como o JS arredonda meio pra cima
+até nos negativos, ganhar um dia em quatro semanas virava "em alta" enquanto
+perder um dia virava "estável". A direção passou a sair do delta cru.
 
 Cada `.html` do renderer carrega seu próprio entrypoint (`popover.js` ou `main.js`);
 `heatmap.js` e `gaps.js` são carregados só pela janela completa e se expõem em
