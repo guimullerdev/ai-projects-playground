@@ -36,7 +36,21 @@ completo por trás de cada decisão.
 - Lista de repositórios com toggle de "contabilizar" (persiste em
   `config.ignoredDirRepos`, dispara rescan).
 
-Ainda não tem: integração com GitHub (v4), relatório semanal, metas.
+## v4 (parcial)
+
+- **Meta semanal** em vez de corrente diária — ver [Meta semanal](#meta-semanal).
+- **Relatório semanal** na janela completa: uma linha por semana (segunda→domingo,
+  mais recente primeiro) com dias com commit, total de commits, repos e — se houver
+  meta — se ela bateu. Em cima, o resumo: média de dias por semana, melhor semana,
+  quantas bateram a meta e a tendência das últimas 4 semanas fechadas contra as 4
+  anteriores. A janela (4, 8, 12, 26 ou 52 semanas) fica no seletor da própria
+  seção e é guardada em `config.reportWeeks`.
+
+  Semana em andamento aparece marcada e **nunca** conta como meta perdida nem
+  entra na média — só semanas fechadas. Dia de folga sai do denominador, então a
+  coluna lê "2 de 5", não "2 de 7".
+
+Ainda não tem: integração com GitHub (v4).
 
 ## Rodar em dev
 

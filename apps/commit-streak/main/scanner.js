@@ -341,6 +341,145 @@ function buildHeatmapWeeks(commitMap, restDays, todayLogical, firstDate, weeksCo
   return weeks;
 }
 
+/**
+ * Relatório semanal: as últimas `weeksCount` semanas (segunda→domingo), mais
+ * recente primeiro, com um resumo por cima.
+ *
+ * É a pergunta que o heatmap não responde. A grade mostra cada dia, e é fácil
+ * olhar 371 células e não enxergar se as semanas estão melhorando ou piorando —
+ * que é exatamente o que decide se o hábito pegou.
+ *
+ * Duas regras de honestidade, as mesmas do resto do app:
+ *
+ *   - **Semana incompleta não vira semana ruim.** A semana corrente (e a mais
+ *     antiga, se o primeiro commit conhecido cai no meio dela) sai marcada como
+ *     `isPartial`: fica fora da média e nunca aparece como meta perdida. Ainda
+ *     dá tempo, e um relatório que já dá a semana por perdida na terça mente.
+ *   - **Dia de folga não conta como dia vazio nem como dia com commit.** Sai da
+ *     conta de oportunidades da semana, igual em `computeWeeklyGoal`.
+ */
+function computeWeeklyReport(commitMap, restDays, todayLogical, { weeksCount = 12, goal = 0 } = {}) {
+  const restSet = new Set(restDays);
+  const firstDate = firstCommitDate(commitMap);
+  const endMonday = mondayOf(todayLogical);
+
+  const weeks = [];
+  for (let i = 0; i < weeksCount; i += 1) {
+    const start = addDays(endMonday, -i * 7);
+    const end = addDays(start, 6);
+
+    let daysWithCommit = 0;
+    let commits = 0;
+    let restCount = 0;
+    let emptyCount = 0;
+    let tracked = 0;
+    const byRepo = new Map();
+
+    for (let k = 0; k < 7; k += 1) {
+      const d = addDays(start, k);
+      if (d > todayLogical) continue; // ainda não chegou
+      if (firstDate && d < firstDate) continue; // antes do primeiro commit: fora de escala
+      tracked += 1;
+
+      const entries = commitMap.get(d) || [];
+      if (entries.length) {
+        // dia de folga em que eu commitei mesmo assim conta como dia com commit
+        daysWithCommit += 1;
+        commits += entries.length;
+        for (const e of entries) byRepo.set(e.repo, (byRepo.get(e.repo) || 0) + 1);
+      } else if (restSet.has(d)) {
+        restCount += 1;
+      } else {
+        emptyCount += 1;
+      }
+    }
+
+    if (tracked === 0) continue; // semana inteira fora do período conhecido
+
+    const isPartial = tracked < 7;
+    weeks.push({
+      start,
+      end,
+      tracked,
+      opportunities: tracked - restCount,
+      daysWithCommit,
+      commits,
+      restDays: restCount,
+      emptyDays: emptyCount,
+      repos: [...byRepo.entries()]
+        .map(([repo, count]) => ({ repo, count }))
+        .sort((a, b) => b.count - a.count || a.repo.localeCompare(b.repo)),
+      isCurrent: start === endMonday,
+      isPartial,
+      met: goal ? daysWithCommit >= goal : null,
+      missed: Boolean(goal) && !isPartial && daysWithCommit < goal,
+    });
+  }
+
+  return { goal, weeksCount, weeks, summary: summarizeWeeks(weeks, goal) };
+}
+
+/**
+ * Média, melhor semana e tendência — calculados **só sobre semanas completas**,
+ * senão a semana corrente (que quase sempre tem menos dias) puxa a média pra
+ * baixo todo dia e o relatório vira um alarme falso rolante.
+ *
+ * `weeks` chega mais recente primeiro, então as 4 primeiras completas são as
+ * "últimas 4 semanas".
+ */
+function summarizeWeeks(weeks, goal) {
+  const complete = weeks.filter((w) => !w.isPartial);
+  const totalCommits = weeks.reduce((sum, w) => sum + w.commits, 0);
+
+  if (!complete.length) {
+    return {
+      completeWeeks: 0,
+      avgDays: null,
+      avgCommits: null,
+      best: null,
+      metCount: null,
+      trend: null,
+      totalCommits,
+    };
+  }
+
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const meanDays = (list) => list.reduce((sum, w) => sum + w.daysWithCommit, 0) / list.length;
+
+  const best = complete.reduce((a, b) =>
+    b.daysWithCommit > a.daysWithCommit ||
+    (b.daysWithCommit === a.daysWithCommit && b.commits > a.commits)
+      ? b
+      : a
+  );
+
+  // Tendência: as 4 semanas completas mais recentes contra as 4 anteriores.
+  // Com menos de 8 não há o que comparar, e chamar o ruído de duas semanas de
+  // "tendência" seria pior que não dizer nada.
+  let trend = null;
+  if (complete.length >= 8) {
+    const recent = meanDays(complete.slice(0, 4));
+    const previous = meanDays(complete.slice(4, 8));
+    const delta = round1(recent - previous);
+    trend = {
+      recent: round1(recent),
+      previous: round1(previous),
+      delta,
+      direction: delta > 0.25 ? 'up' : delta < -0.25 ? 'down' : 'flat',
+    };
+  }
+
+  return {
+    completeWeeks: complete.length,
+    avgDays: round1(meanDays(complete)),
+    avgCommits: round1(complete.reduce((sum, w) => sum + w.commits, 0) / complete.length),
+    best,
+    metCount: goal ? complete.filter((w) => w.daysWithCommit >= goal).length : null,
+    trend,
+    totalCommits,
+  };
+}
+
 /** Run `tasks` (zero-arg functions returning promises) with at most `limit` in flight. */
 async function pool(tasks, limit) {
   const results = new Array(tasks.length);
@@ -422,4 +561,6 @@ module.exports = {
   bucketForCount,
   buildHeatmapWeeks,
   computeGaps,
+  computeWeeklyReport,
+  summarizeWeeks,
 };

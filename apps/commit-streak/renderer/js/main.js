@@ -10,6 +10,14 @@ const gapListEl = document.getElementById('gap-list');
 const btnRefresh = document.getElementById('btn-refresh');
 const repoBodyEl = document.getElementById('repo-body');
 
+const reportEls = {
+  summaryEl: document.getElementById('report-summary'),
+  trendEl: document.getElementById('report-trend'),
+  tbodyEl: document.getElementById('report-body'),
+  goalHeaderEl: document.getElementById('report-goal-header'),
+};
+const reportRangeEl = document.getElementById('report-range');
+
 const kpiEls = {
   current: document.getElementById('kpi-current'),
   longest: document.getElementById('kpi-longest'),
@@ -70,6 +78,8 @@ function render(history) {
   renderGoal(history.weeklyGoal);
   window.Heatmap.renderHeatmap({ weeks: history.weeks, gridEl, monthRowEl, tooltipEl });
   renderTable(history.weeks);
+  window.Report.renderWeeklyReport(history.report, reportEls);
+  reportRangeEl.value = String(history.report.weeksCount);
 }
 
 function loadGaps() {
@@ -112,6 +122,10 @@ window.commitStreak.onHistoryUpdate(render);
 loadGaps();
 loadRepos();
 btnRefresh.addEventListener('click', refreshAll);
+
+reportRangeEl.addEventListener('change', () => {
+  window.commitStreak.setReportWeeks(Number(reportRangeEl.value)).then(render);
+});
 
 btnTableToggle.addEventListener('click', () => {
   const showingTable = !tableSection.hidden;

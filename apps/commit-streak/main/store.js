@@ -44,6 +44,9 @@ function defaultConfig() {
     // Dias de commit por semana. 0 = sem meta, e o app segue sendo só o streak
     // diário. Com meta batida, os lembretes do dia calam — é o ponto de ter meta.
     weeklyGoal: 0,
+    // Janela do relatório semanal, em semanas. Escolhida na própria janela e
+    // guardada aqui, como o tema — é preferência de leitura, não tuning.
+    reportWeeks: 12,
     ignoredDirNames: ['node_modules', 'vendor', '.build', 'dist', 'build'],
     maxDepth: 3,
     countMerges: false,

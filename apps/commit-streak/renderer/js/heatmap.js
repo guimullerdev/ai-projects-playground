@@ -117,4 +117,4 @@ function hideTooltip(tooltipEl) {
   tooltipEl.hidden = true;
 }
 
-window.Heatmap = { renderHeatmap, formatDatePt, WEEKDAY_NAMES };
+window.Heatmap = { renderHeatmap, formatDatePt, WEEKDAY_NAMES, MONTH_ABBR };

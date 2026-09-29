@@ -189,13 +189,16 @@ apps/commit-streak/
         ├── popover.js   # entrypoint do popover
         ├── main.js      # entrypoint da janela: KPIs, tabela, tema, orquestração
         ├── heatmap.js   # grade, rampa, tooltip, navegação por teclado
-        └── gaps.js      # painel de lacunas + tabela de repos
+        ├── gaps.js      # painel de lacunas + tabela de repos
+        └── report.js    # relatório semanal: resumo, tendência e tabela
 ```
 
 **Onde o cálculo mora, e por quê.** O plano original previa um `renderer/js/stats.js`
 com streak, cobertura e lacunas. Ele não existe: `computeStreaks`, `computeKPIs`,
 `computeGaps` e `buildHeatmapWeeks` ficaram todos em `main/scanner.js`, junto da
 leitura do `git log`.
+
+O mesmo vale pro `computeWeeklyReport`, que entrou depois pela mesma porta.
 
 A razão é que essas funções operam sobre o mapa de commits completo — o mesmo dado
 que o main já tem em cache e que o tray precisa para decidir o ícone e a notificação.
@@ -238,11 +241,11 @@ No renderer: `contextIsolation: true`, `nodeIntegration: false`, preload expondo
 
 ## Fases
 
-**Status: v3 entregue, v4 começada pelas metas.** As três primeiras fases estão no
+**Status: v3 entregue, v4 só falta o GitHub.** As três primeiras fases estão no
 `main`, o empacotamento saiu (`eef9d59`, 10/09/2026 — `npm run dist` gera o `.dmg`
 com `LSUIElement` e ícone gerado por script, um pedaço 3×3 do próprio heatmap com a
-célula vazia de anel), e da v4 as metas semanais já existem (`6cbea27`, 11/09/2026).
-Falta da v4 a API do GitHub e o relatório semanal.
+célula vazia de anel), e da v4 já existem as metas semanais (`6cbea27`, 11/09/2026)
+e o relatório semanal (29/09/2026). Falta só a integração com a API do GitHub.
 
 **v1 — o loop mínimo que já muda o comportamento** — ✅ feito (`cddbc77`, 10/07/2026)
 Scanner + cache + tray com os três estados + notificações escalonadas + popover com estado de hoje e streak. Sem janela completa, sem heatmap. Se essa parte não me faz commitar mais, o resto não vale a pena.
@@ -260,7 +263,23 @@ Detecção de trabalho pendente (dirty / não pushado / stash), painel de lacuna
   no ícone sobre o dia de hoje.
 - ⬜ Integração opcional com a API do GitHub, pra pegar commit feito em outra máquina ou
   pela web (mesclando com o dado local pelo hash).
-- ⬜ Relatório semanal.
+- ✅ **Relatório semanal** (`scanner.computeWeeklyReport` + `renderer/js/report.js`):
+  seção na janela completa com uma linha por semana (segunda→domingo, mais recente
+  primeiro), janela de 4 a 52 semanas guardada no config, e um resumo em cima com
+  média, melhor semana, quantas bateram a meta e a **tendência** — as 4 semanas
+  fechadas mais recentes contra as 4 anteriores.
+
+  O heatmap responde "que dia eu perdi"; o relatório responde "as minhas semanas
+  estão melhorando ou piorando", que é o que diz se o hábito pegou — e é fácil
+  olhar 371 células e não enxergar isso.
+
+  Duas regras vieram direto das metas, porque o erro seria o mesmo: **semana
+  incompleta não vira semana ruim** (a corrente, e a mais antiga se o primeiro
+  commit cai no meio dela, ficam de fora da média e nunca aparecem como meta
+  perdida — um relatório que já dá a semana por perdida na terça mente), e **dia
+  de folga sai do denominador** ("2 de 5", não "2 de 7"). A tendência só aparece
+  com 8 semanas fechadas: com menos, chamar o ruído de duas semanas de
+  "tendência" seria pior que não dizer nada.
 
 ## Decisões em aberto
 

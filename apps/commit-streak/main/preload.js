@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('commitStreak', {
     return () => ipcRenderer.removeListener('history:update', handler);
   },
 
+  setReportWeeks: (weeksCount) => ipcRenderer.invoke('report:setWeeks', weeksCount),
+
   getGaps: () => ipcRenderer.invoke('gaps:get'),
   markGapAsRest: (gap) => ipcRenderer.invoke('restday:markGap', gap),
   getPendingToday: () => ipcRenderer.invoke('pending:getForToday'),

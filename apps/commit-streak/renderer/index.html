@@ -91,6 +91,38 @@
         </div>
       </section>
 
+      <section id="report-section" aria-label="Relatório semanal">
+        <div class="section-header">
+          <p class="section-title">Relatório semanal</p>
+          <label class="range-picker">
+            Janela
+            <select id="report-range">
+              <option value="4">4 semanas</option>
+              <option value="8">8 semanas</option>
+              <option value="12">12 semanas</option>
+              <option value="26">26 semanas</option>
+              <option value="52">52 semanas</option>
+            </select>
+          </label>
+        </div>
+        <p class="report-summary" id="report-summary"></p>
+        <p class="report-trend" id="report-trend" hidden></p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Semana</th>
+                <th scope="col">Dias c/ commit</th>
+                <th scope="col">Commits</th>
+                <th scope="col">Repos</th>
+                <th scope="col" id="report-goal-header">Meta</th>
+              </tr>
+            </thead>
+            <tbody id="report-body"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section aria-label="Lacunas">
         <div class="section-header">
           <p class="section-title">Lacunas</p>
@@ -117,6 +149,7 @@
     </div>
     <script src="js/heatmap.js"></script>
     <script src="js/gaps.js"></script>
+    <script src="js/report.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

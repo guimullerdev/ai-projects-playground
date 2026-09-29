@@ -507,3 +507,85 @@ th {
   padding: 5px 10px;
   font-size: 11px;
 }
+
+/* ---- Relatório semanal ---- */
+
+.range-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.range-picker select {
+  font: inherit;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+
+.report-summary {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 4px;
+}
+
+/* A direção da tendência está escrita ("Em alta"/"Em queda"), a cor só reforça. */
+.report-trend {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+.report-trend.is-up {
+  color: var(--good);
+}
+.report-trend.is-down {
+  color: var(--critical);
+}
+
+/* Semana em andamento fica visivelmente provisória — ela ainda vai mudar. */
+.week-current td {
+  color: var(--text-secondary);
+}
+
+.week-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+.cell-sub {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.cell-repos {
+  white-space: normal;
+  color: var(--text-secondary);
+}
+
+.goal-badge {
+  font-weight: 600;
+  font-size: 11px;
+}
+.goal-badge.met {
+  color: var(--good);
+}
+.goal-badge.missed {
+  color: var(--critical);
+}
+.goal-badge.pending {
+  color: var(--text-muted);
+}

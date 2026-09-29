@@ -76,14 +76,24 @@ function computeState() {
   };
 }
 
-/** Full data for the main window: KPI row + 53-week heatmap grid. */
+/** Weekly report over the configured window — see scanner.computeWeeklyReport. */
+function computeReport() {
+  return scanner.computeWeeklyReport(commitMap, config.restDays, todayLogical(), {
+    weeksCount: config.reportWeeks,
+    goal: config.weeklyGoal,
+  });
+}
+
+/** Full data for the main window: KPI row + 53-week heatmap grid + weekly report. */
 function computeHistory() {
   const today = todayLogical();
   const kpis = scanner.computeKPIs(commitMap, config.restDays, today);
   const firstDate = scanner.firstCommitDate(commitMap);
   const weeks = scanner.buildHeatmapWeeks(commitMap, config.restDays, today, firstDate);
   const weeklyGoal = scanner.computeWeeklyGoal(commitMap, config.restDays, today, config.weeklyGoal);
-  return { today, kpis, weeks, weeklyGoal, theme: config.theme };
+  // O relatório viaja junto do histórico de propósito: os dois saem do mesmo
+  // commitMap, e assim o rescan periódico atualiza a tabela sem um canal à parte.
+  return { today, kpis, weeks, weeklyGoal, report: computeReport(), theme: config.theme };
 }
 
 /**
@@ -322,6 +332,19 @@ ipcMain.handle('theme:set', (_event, theme) => {
     mainWindow.webContents.send('history:update', computeHistory());
   }
   return { theme: config.theme };
+});
+
+// Janelas oferecidas na tela. Validar contra a lista evita que um valor torto
+// vindo do renderer vire um `reportWeeks` absurdo gravado no config.
+const REPORT_WEEK_CHOICES = [4, 8, 12, 26, 52];
+
+ipcMain.handle('report:setWeeks', (_event, weeksCount) => {
+  const n = Number(weeksCount);
+  if (REPORT_WEEK_CHOICES.includes(n)) {
+    config.reportWeeks = n;
+    store.saveConfig(userDataDir, config);
+  }
+  return computeHistory();
 });
 
 ipcMain.handle('gaps:get', () => computeGapsWithPending());
