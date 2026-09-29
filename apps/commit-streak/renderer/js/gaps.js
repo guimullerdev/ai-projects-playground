@@ -1,8 +1,10 @@
 // Gaps panel (empty-day runs, most recent first) and the repo table.
-// See plan.md § Painel de lacunas — two honest outcomes per gap: the work
-// existed and never got committed (go commit/push it, "abrir no editor"),
-// or it really was a day off ("marcar como folga"). No third button that
-// fakes GIT_AUTHOR_DATE to paint the day green.
+//
+// A gap has exactly two honest outcomes: the work existed and never got
+// committed (go commit/push it, "abrir no editor"), or it really was a day
+// off ("marcar como folga"). There is deliberately no third button that fakes
+// GIT_AUTHOR_DATE to paint the day green — a graph that lies is worth
+// nothing, and this signal is the whole point of the app.
 
 function formatGapRange(gap) {
   const fmt = (iso) => window.Heatmap.formatDatePt(iso);

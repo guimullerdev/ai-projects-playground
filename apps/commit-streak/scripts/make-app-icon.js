@@ -22,7 +22,8 @@ const OUT_DIR = path.join(__dirname, '..', 'build');
 // Geometria do ícone no macOS: arte dentro de um quadrado arredondado recuado.
 const TILE = { inset: 100, radius: 185, color: [26, 26, 25] };
 
-// Rampa do tema escuro, a mesma da tabela no plan.md — mais commits, mais claro.
+// Rampa do tema escuro, a mesma da grade do heatmap (ver `--heat-*` em
+// renderer/style.css) — mais commits, mais claro.
 const LEVELS = {
   1: [24, 79, 149],
   2: [37, 106, 191],

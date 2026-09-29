@@ -1,8 +1,7 @@
 # Commit Streak
 
 App de menu bar (macOS) que varre seus repositórios git locais e te lembra de
-commitar antes do dia acabar. Ver [plan.md](./plan.md) para o raciocínio
-completo por trás de cada decisão.
+commitar antes do dia acabar.
 
 ## v1
 
@@ -81,7 +80,7 @@ testes também não precisam de um. São 64, em `test/`:
   `GIT_AUTHOR_DATE` fixo, pra não depender de que horas são agora). Sem mock de
   `execFile`: o que pode quebrar aqui é o contrato com o git.
 
-O que os testes cobrem é o que o `plan.md` chama de **decisão**, não detalhe de
+O que os testes cobrem são **decisões de produto**, não detalhes de
 implementação. Se um deles quebrar, a pergunta certa é "eu mudei de ideia sobre
 isso?", não "como faço o teste passar?".
 
@@ -99,9 +98,9 @@ do `claude-statusbar` e do `cambio-ai`:
   dock. É o que faltava pro `showDockIcon: false` não ser a única linha de
   defesa.
 - **Ícone gerado por script** ([`scripts/make-app-icon.js`](./scripts/make-app-icon.js)):
-  um pedaço 3×3 do próprio heatmap, com a rampa azul da tabela do
-  [plan.md](./plan.md) e **uma célula vazia com anel** — o detalhe que define o
-  app, já que aqui o assunto é a ausência e não só o que foi feito.
+  um pedaço 3×3 do próprio heatmap, com a mesma rampa azul da grade e **uma
+  célula vazia com anel** — o detalhe que define o app, já que aqui o assunto é
+  a ausência e não só o que foi feito.
 - **Não é assinado**: sem Developer ID, o `.app` fica com a assinatura ad-hoc do
   binário do Electron. Primeira abertura vinda do `.dmg` por botão direito ›
   Abrir, ou `xattr -dr com.apple.quarantine "/Applications/Commit Streak.app"`.

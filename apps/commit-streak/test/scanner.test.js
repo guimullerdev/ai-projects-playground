@@ -2,10 +2,10 @@
 // sobre os seus dias. Rodam com `npm test` (node:test embutido, sem
 // dependência nova, como o resto do repo, que não tem build step).
 //
-// O que está testado aqui é de propósito o que o plan.md chama de decisão, e
-// não o que é detalhe de implementação: a virada do dia às 4h, folga que não
-// quebra streak, semana parcial que não vira semana ruim. Se alguma dessas
-// mudar, é pra quebrar um teste e obrigar a reler o plano.
+// O que está testado aqui é de propósito **decisão de produto**, e não
+// detalhe de implementação: a virada do dia às 4h, folga que não quebra
+// streak, semana parcial que não vira semana ruim. Se alguma dessas mudar, é
+// pra quebrar um teste e obrigar a decidir de novo, de propósito.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');

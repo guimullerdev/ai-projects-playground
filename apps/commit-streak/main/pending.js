@@ -1,7 +1,7 @@
 // "Is there unregistered work sitting in this repo right now?" — dirty
 // worktree, commits ahead of upstream, and stash entries. This is what turns
 // an empty day in the gaps panel into an actionable line instead of just
-// a red mark (see plan.md § Painel de lacunas).
+// a red mark.
 
 const path = require('path');
 const { execFile } = require('child_process');

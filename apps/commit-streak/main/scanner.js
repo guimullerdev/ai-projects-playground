@@ -305,7 +305,8 @@ function bucketForCount(count) {
  * 7 day cells (Monday -> Sunday), ending on the Sunday of the current week.
  * Each cell: { date, count, bucket, repos, status }, status one of
  * 'before-first' | 'normal' | 'future' — the zero-day ring only applies to
- * 'normal' (see plan.md § Design do heatmap).
+ * 'normal': a day before the first commit, or one that hasn't happened yet,
+ * is out of scale, not a gap.
  */
 function buildHeatmapWeeks(commitMap, restDays, todayLogical, firstDate, weeksCount = 53) {
   const restSet = new Set(restDays);

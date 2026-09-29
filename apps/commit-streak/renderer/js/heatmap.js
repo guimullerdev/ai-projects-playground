@@ -1,7 +1,7 @@
 // Renders the 53-week grid: month row, day cells, hover tooltip and
 // keyboard navigation (arrow keys move focus between cells). Pure DOM, no
 // framework — `weeks` is the array-of-53-arrays-of-7 shape from
-// scanner.buildHeatmapWeeks (see plan.md § Design do heatmap).
+// scanner.buildHeatmapWeeks.
 
 const WEEKDAY_NAMES = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo'];
 const MONTH_ABBR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
