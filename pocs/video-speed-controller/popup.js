@@ -1,7 +1,7 @@
 const DEFAULT_SPEED = 1;
 const STEP = 0.1;
 const MIN_SPEED = 0.1;
-const MAX_SPEED = 4;
+const MAX_SPEED = 16;
 
 const speedDisplay = document.getElementById('speedDisplay');
 const speedSlider = document.getElementById('speedSlider');

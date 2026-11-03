@@ -47,24 +47,30 @@
     overlay.dataset.hideTimer = timer;
   }
 
+  // Só mostra o badge quando a velocidade efetiva muda de fato; reaplicar
+  // a mesma velocidade em eventos do player (play, canplay...) não pisca.
   function applySpeed(video) {
     const speed = effectiveSpeed();
+    const changed = video.playbackRate !== speed;
     video.playbackRate = speed;
     const overlay = overlays.get(video);
     if (overlay) {
       overlay.textContent = adActive ? `${formatSpeed(speed)} (anúncio)` : formatSpeed(speed);
     }
-    flashOverlay(video);
+    if (changed) flashOverlay(video);
   }
 
-  function applySpeedToAllVideos() {
-    document.querySelectorAll('video').forEach(applySpeed);
+  function applySpeedToAllVideos({ flash = false } = {}) {
+    document.querySelectorAll('video').forEach((video) => {
+      applySpeed(video);
+      if (flash) flashOverlay(video);
+    });
   }
 
   function setSpeed(speed) {
     currentSpeed = clamp(speed);
     chrome.runtime.sendMessage({ type: 'vsc-set-speed', speed: currentSpeed }).catch(() => {});
-    applySpeedToAllVideos();
+    applySpeedToAllVideos({ flash: true });
   }
 
   function createOverlay(video) {
