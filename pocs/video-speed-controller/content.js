@@ -3,6 +3,7 @@
   const STEP = 0.1;
   const MIN_SPEED = 0.1;
   const MAX_SPEED = 16;
+  const RESET_WINDOW_MS = 1500;
 
   const DEFAULT_AD_SPEED = 4;
   const MIN_AD_SPEED = 1.5;
@@ -97,11 +98,21 @@
     // Sites frequentemente resetam playbackRate para 1x ao trocar de vídeo
     // (playlists, autoplay, feeds). Reforçamos a velocidade escolhida em
     // todos esses pontos e sempre que o próprio site tentar mudá-la.
+    let lastLoadStart = 0;
+    video.addEventListener('loadstart', () => {
+      lastLoadStart = Date.now();
+    });
     ['loadstart', 'loadedmetadata', 'canplay', 'play', 'playing'].forEach((eventName) => {
       video.addEventListener(eventName, () => applySpeed(video));
     });
+    // Mudança logo após carregar um vídeo novo (ou durante anúncio) é o site
+    // resetando a velocidade: reforçamos. Fora disso, é o usuário usando o
+    // menu de velocidade do próprio player: adotamos o valor escolhido.
     video.addEventListener('ratechange', () => {
-      if (video.playbackRate !== effectiveSpeed()) applySpeed(video);
+      if (video.playbackRate === effectiveSpeed()) return;
+      const siteReset = adActive || video.readyState < 1 || Date.now() - lastLoadStart < RESET_WINDOW_MS;
+      if (siteReset) applySpeed(video);
+      else setSpeed(video.playbackRate);
     });
 
     createOverlay(video);
