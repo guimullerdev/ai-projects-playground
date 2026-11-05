@@ -29,10 +29,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const tabId = message.tabId ?? sender.tab?.id;
     if (tabId == null) return;
     setSpeed(tabId, message.speed).then(() => {
-      // Mensagem veio do popup (que não é o content script da aba): avisa a aba para aplicar na hora.
-      if (message.tabId != null) {
-        chrome.tabs.sendMessage(tabId, { type: 'vsc-apply-speed', speed: message.speed }).catch(() => {});
-      }
+      // Avisa todos os frames da aba (inclusive iframes com vídeo), venha a
+      // mudança do popup ou de um atalho usado em outro frame.
+      chrome.tabs.sendMessage(tabId, { type: 'vsc-apply-speed', speed: message.speed }).catch(() => {});
       sendResponse({ ok: true });
     });
     return true;

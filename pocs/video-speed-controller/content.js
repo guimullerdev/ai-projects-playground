@@ -133,17 +133,22 @@
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  function isTypingTarget(target) {
+  function isTypingTarget(event) {
+    // composedPath()[0] é o elemento real mesmo dentro de Shadow DOM.
+    const target = event.composedPath()[0];
     return (
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
       target?.isContentEditable
     );
   }
 
   document.addEventListener('keydown', (event) => {
-    if (isTypingTarget(event.target)) return;
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (isTypingTarget(event)) return;
+    // Sem vídeo na página, as teclas S/D/R ficam livres para o site.
+    if (!document.querySelector('video')) return;
 
     switch (event.key.toLowerCase()) {
       case 's':

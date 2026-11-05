@@ -41,6 +41,13 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
   });
 });
 
+// Mantém o popup atualizado se a velocidade mudar por atalho enquanto ele está aberto.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'session' || activeTabId == null) return;
+  const change = changes[`speed_${activeTabId}`];
+  if (typeof change?.newValue === 'number') render(change.newValue);
+});
+
 chrome.storage.sync.get(['adSpeed', 'autoAdSpeedEnabled'], (result) => {
   autoAdSpeedToggle.checked = result.autoAdSpeedEnabled !== false;
   adSpeedSelect.value = String(result.adSpeed || 4);
