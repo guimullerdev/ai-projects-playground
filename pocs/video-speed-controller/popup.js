@@ -50,7 +50,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 chrome.storage.sync.get(['adSpeed', 'autoAdSpeedEnabled'], (result) => {
   autoAdSpeedToggle.checked = result.autoAdSpeedEnabled !== false;
-  adSpeedSelect.value = String(result.adSpeed || 4);
+  adSpeedSelect.value = String(Math.min(3, result.adSpeed || 3));
 });
 
 autoAdSpeedToggle.addEventListener('change', () => {

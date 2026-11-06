@@ -5,14 +5,18 @@
   const MAX_SPEED = 16;
   const RESET_WINDOW_MS = 1500;
 
-  const DEFAULT_AD_SPEED = 4;
-  const MIN_AD_SPEED = 1.5;
+  const DEFAULT_AD_SPEED = 3;
+  const MIN_AD_SPEED = 1;
+  const AD_SPEED_CAP = 3;
+  const AD_WOBBLE_MIN_MS = 1500;
+  const AD_WOBBLE_MAX_MS = 4000;
 
   let currentSpeed = DEFAULT_SPEED;
   let adSpeedMax = DEFAULT_AD_SPEED;
   let adSpeed = DEFAULT_AD_SPEED;
   let autoAdSpeedEnabled = true;
   let adActive = false;
+  let adWobbleTimer = null;
   const overlays = new WeakMap();
 
   function round(value) {
@@ -31,12 +35,37 @@
     return adActive ? adSpeed : currentSpeed;
   }
 
-  // Velocidade fixa nos anúncios é um padrão fácil de detectar; sorteamos
-  // um valor a cada anúncio (entre 1.5x e o teto configurado, até 4x) para
-  // que o comportamento pareça menos automatizado.
+  // Velocidade fixa (ou sempre alta) nos anúncios é fácil de detectar.
+  // Durante o anúncio a velocidade fica "indo e voltando": a cada 1,5–4s
+  // (intervalo sorteado) muda para um valor aleatório entre 1x e o teto
+  // (até 3x), sempre diferente do anterior.
   function rollAdSpeed() {
-    const max = Math.max(MIN_AD_SPEED, Math.min(4, adSpeedMax));
-    adSpeed = round(MIN_AD_SPEED + Math.random() * (max - MIN_AD_SPEED));
+    const max = Math.max(MIN_AD_SPEED, Math.min(AD_SPEED_CAP, adSpeedMax));
+    let next;
+    do {
+      next = round(MIN_AD_SPEED + Math.random() * (max - MIN_AD_SPEED));
+    } while (max - MIN_AD_SPEED >= 0.5 && Math.abs(next - adSpeed) < 0.3);
+    adSpeed = next;
+  }
+
+  function startAdWobble() {
+    stopAdWobble();
+    rollAdSpeed();
+    const tick = () => {
+      const delay = AD_WOBBLE_MIN_MS + Math.random() * (AD_WOBBLE_MAX_MS - AD_WOBBLE_MIN_MS);
+      adWobbleTimer = setTimeout(() => {
+        if (!adActive) return;
+        rollAdSpeed();
+        applySpeedToAllVideos();
+        tick();
+      }, delay);
+    };
+    tick();
+  }
+
+  function stopAdWobble() {
+    clearTimeout(adWobbleTimer);
+    adWobbleTimer = null;
   }
 
   function flashOverlay(video) {
@@ -204,6 +233,7 @@
       if (!autoAdSpeedEnabled) {
         if (adActive) {
           adActive = false;
+          stopAdWobble();
           applySpeedToAllVideos();
         }
         return;
@@ -211,7 +241,8 @@
       const showingAd = isYouTubeAdShowing();
       if (showingAd !== adActive) {
         adActive = showingAd;
-        if (showingAd) rollAdSpeed();
+        if (showingAd) startAdWobble();
+        else stopAdWobble();
         applySpeedToAllVideos();
       }
     }
