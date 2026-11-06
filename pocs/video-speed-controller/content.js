@@ -68,9 +68,21 @@
     });
   }
 
+  // Depois que a extensão é recarregada/atualizada, o script antigo continua
+  // na aba, mas sem acesso a chrome.runtime: sendMessage lança "Extension
+  // context invalidated" de forma síncrona. Nesse caso só aplicamos localmente.
+  function saveSpeed(speed) {
+    if (!chrome.runtime?.id) return;
+    try {
+      chrome.runtime.sendMessage({ type: 'vsc-set-speed', speed }).catch(() => {});
+    } catch {
+      // contexto invalidado entre a checagem e o envio
+    }
+  }
+
   function setSpeed(speed) {
     currentSpeed = clamp(speed);
-    chrome.runtime.sendMessage({ type: 'vsc-set-speed', speed: currentSpeed }).catch(() => {});
+    saveSpeed(currentSpeed);
     applySpeedToAllVideos({ flash: true });
   }
 
